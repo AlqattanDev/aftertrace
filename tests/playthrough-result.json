@@ -1,0 +1,344 @@
+{
+  "outcome": {
+    "solved": true,
+    "suspect": "ellis",
+    "reasons": [
+      "Scene 01 documented: Rowan Pike; projectile 01-B recovered and sealed.",
+      "W-104 test-fire matches scene 01 ammunition 01-C: signature BR-47.",
+      "W-104: a fingerprint matches Ellis Vale. Handling is established; its time is not.",
+      "Iris Bell identifies Ellis Vale firing at scene 01 at 21:00. Statement recorded from an unobstructed view."
+    ]
+  },
+  "playSeconds": 124.19700000000452,
+  "incidents": [
+    "01",
+    "02"
+  ],
+  "weapon": {
+    "id": "W-104",
+    "kind": "pistol",
+    "label": "Compact pistol · W-104",
+    "pos": {
+      "x": 17.931558845439493,
+      "z": -7.558717311973887
+    },
+    "holder": "detective",
+    "prints": [
+      "leon",
+      "ellis",
+      "mara"
+    ],
+    "signature": "BR-47",
+    "history": [
+      {
+        "time": 0,
+        "action": "Stocked at Mercer Pawn",
+        "actor": "leon",
+        "at": {
+          "x": -22,
+          "z": -6
+        },
+        "to": "leon"
+      },
+      {
+        "time": 10.666399999999982,
+        "action": "Handled / transferred W-104",
+        "actor": "ellis",
+        "at": {
+          "x": -22.07186133370603,
+          "z": -5.544916928575158
+        },
+        "from": "leon",
+        "to": "ellis"
+      },
+      {
+        "time": 10.666399999999982,
+        "action": "Legal sale recorded to Ellis Vale",
+        "actor": "ellis",
+        "at": {
+          "x": -22.07186133370603,
+          "z": -5.544916928575158
+        }
+      },
+      {
+        "time": 28.132400000000118,
+        "action": "Fired W-104 in incident 01",
+        "actor": "ellis",
+        "at": {
+          "x": -11.5,
+          "z": -13
+        }
+      },
+      {
+        "time": 48.59799999999992,
+        "action": "Discarded W-104 into dumpster",
+        "actor": "ellis",
+        "at": {
+          "x": -11.5,
+          "z": -23
+        },
+        "from": "ellis",
+        "to": "dumpster"
+      },
+      {
+        "time": 178.79280000000148,
+        "action": "Handled / transferred W-104",
+        "actor": "mara",
+        "at": {
+          "x": -8.023248051040321,
+          "z": -24.942394092002523
+        },
+        "from": "world",
+        "to": "mara"
+      },
+      {
+        "time": 178.79280000000148,
+        "action": "Recovered discarded weapon",
+        "actor": "mara",
+        "at": {
+          "x": -8.023248051040321,
+          "z": -24.942394092002523
+        }
+      },
+      {
+        "time": 265.1228000000073,
+        "action": "Fired W-104 in incident 02",
+        "actor": "mara",
+        "at": {
+          "x": 9,
+          "z": 6
+        }
+      },
+      {
+        "time": 265.1228000000073,
+        "action": "Dropped weapon after incident 02",
+        "actor": "mara",
+        "at": {
+          "x": 10.2,
+          "z": 6.5
+        },
+        "from": "mara",
+        "to": "street"
+      },
+      {
+        "time": 320.58720000001966,
+        "action": "Handled / transferred W-104",
+        "actor": "detective",
+        "at": {
+          "x": 8.325958240191932,
+          "z": 5.673738466772089
+        },
+        "from": "world",
+        "to": "detective"
+      },
+      {
+        "time": 320.58720000001966,
+        "action": "Sealed evidence W-104",
+        "actor": "detective",
+        "at": {
+          "x": 8.325958240191932,
+          "z": 5.673738466772089
+        }
+      }
+    ],
+    "collected": true,
+    "visible": false
+  },
+  "facts": [
+    {
+      "key": "scene:01",
+      "type": "scene",
+      "incident": "01",
+      "text": "Scene 01: Rowan Pike. Non-graphic examination recovered a projectile. Apparent gunshot death; weapon and actor unconfirmed."
+    },
+    {
+      "key": "witness:iris:01:shot",
+      "type": "witness",
+      "suspect": "ellis",
+      "incident": "01",
+      "direct": true,
+      "text": "Iris Bell identifies Ellis Vale firing at scene 01 at 21:00. Statement recorded from an unobstructed view."
+    },
+    {
+      "key": "scene:02",
+      "type": "scene",
+      "incident": "02",
+      "text": "Scene 02: Owen Shaw. Non-graphic examination recovered a projectile. Apparent gunshot death; weapon and actor unconfirmed."
+    },
+    {
+      "key": "records:identities",
+      "type": "record",
+      "text": "Reference database: Ellis Vale (courier), Mara Finch (salvage collector), Leon Ward (pawnbroker). Reference prints available for lab comparison. These records establish identity, not guilt."
+    },
+    {
+      "key": "records:sale",
+      "type": "record",
+      "suspect": "ellis",
+      "item": "W-104",
+      "text": "Mercer sales ledger: W-104 was legally sold to Ellis Vale. Purchase establishes a transfer only."
+    },
+    {
+      "key": "prints:W-104:leon",
+      "type": "print",
+      "item": "W-104",
+      "suspect": "leon",
+      "text": "W-104: a fingerprint matches Leon Ward. Handling is established; its time is not."
+    },
+    {
+      "key": "prints:W-104:ellis",
+      "type": "print",
+      "item": "W-104",
+      "suspect": "ellis",
+      "text": "W-104: a fingerprint matches Ellis Vale. Handling is established; its time is not."
+    },
+    {
+      "key": "prints:W-104:mara",
+      "type": "print",
+      "item": "W-104",
+      "suspect": "mara",
+      "text": "W-104: a fingerprint matches Mara Finch. Handling is established; its time is not."
+    },
+    {
+      "key": "ballistics:W-104",
+      "type": "ballistic",
+      "item": "W-104",
+      "signature": "BR-47",
+      "text": "W-104: test-fire signature BR-47. Matching signatures link objects and incidents, not an individual shooter."
+    },
+    {
+      "key": "prints:01-C:ellis",
+      "type": "print",
+      "item": "01-C",
+      "incident": "01",
+      "suspect": "ellis",
+      "text": "01-C: a fingerprint matches Ellis Vale. Handling is established; its time is not."
+    },
+    {
+      "key": "ballistics:01-C",
+      "type": "ballistic",
+      "item": "01-C",
+      "incident": "01",
+      "signature": "BR-47",
+      "text": "01-C: microscopy signature BR-47. Matching signatures link objects and incidents, not an individual shooter."
+    },
+    {
+      "key": "prints:01-B:none",
+      "type": "print",
+      "item": "01-B",
+      "incident": "01",
+      "text": "01-B: no usable fingerprints. A negative result does not identify a handler."
+    },
+    {
+      "key": "ballistics:01-B",
+      "type": "ballistic",
+      "item": "01-B",
+      "incident": "01",
+      "signature": "BR-47",
+      "text": "01-B: microscopy signature BR-47. Matching signatures link objects and incidents, not an individual shooter."
+    },
+    {
+      "key": "prints:02-C:mara",
+      "type": "print",
+      "item": "02-C",
+      "incident": "02",
+      "suspect": "mara",
+      "text": "02-C: a fingerprint matches Mara Finch. Handling is established; its time is not."
+    },
+    {
+      "key": "ballistics:02-C",
+      "type": "ballistic",
+      "item": "02-C",
+      "incident": "02",
+      "signature": "BR-47",
+      "text": "02-C: microscopy signature BR-47. Matching signatures link objects and incidents, not an individual shooter."
+    },
+    {
+      "key": "prints:02-B:none",
+      "type": "print",
+      "item": "02-B",
+      "incident": "02",
+      "text": "02-B: no usable fingerprints. A negative result does not identify a handler."
+    },
+    {
+      "key": "ballistics:02-B",
+      "type": "ballistic",
+      "item": "02-B",
+      "incident": "02",
+      "signature": "BR-47",
+      "text": "02-B: microscopy signature BR-47. Matching signatures link objects and incidents, not an individual shooter."
+    }
+  ],
+  "tests": [
+    {
+      "id": "prints:W-104",
+      "item": "W-104",
+      "kind": "prints",
+      "due": 463.1196000000248,
+      "done": true
+    },
+    {
+      "id": "ballistics:W-104",
+      "item": "W-104",
+      "kind": "ballistics",
+      "due": 463.2532000000248,
+      "done": true
+    },
+    {
+      "id": "prints:01-C",
+      "item": "01-C",
+      "kind": "prints",
+      "due": 463.3864000000248,
+      "done": true
+    },
+    {
+      "id": "ballistics:01-C",
+      "item": "01-C",
+      "kind": "ballistics",
+      "due": 463.51960000002487,
+      "done": true
+    },
+    {
+      "id": "prints:01-B",
+      "item": "01-B",
+      "kind": "prints",
+      "due": 463.6528000000249,
+      "done": true
+    },
+    {
+      "id": "ballistics:01-B",
+      "item": "01-B",
+      "kind": "ballistics",
+      "due": 463.7864000000249,
+      "done": true
+    },
+    {
+      "id": "prints:02-C",
+      "item": "02-C",
+      "kind": "prints",
+      "due": 463.91960000002496,
+      "done": true
+    },
+    {
+      "id": "ballistics:02-C",
+      "item": "02-C",
+      "kind": "ballistics",
+      "due": 464.05320000002496,
+      "done": true
+    },
+    {
+      "id": "prints:02-B",
+      "item": "02-B",
+      "kind": "prints",
+      "due": 464.18600000002505,
+      "done": true
+    },
+    {
+      "id": "ballistics:02-B",
+      "item": "02-B",
+      "kind": "ballistics",
+      "due": 464.31960000002505,
+      "done": true
+    }
+  ],
+  "errors": []
+}

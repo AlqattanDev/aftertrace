@@ -1,0 +1,26 @@
+{
+  "simultaneousTouch": true,
+  "movedFrom": {
+    "x": -25,
+    "z": 2
+  },
+  "movedTo": {
+    "x": -25.45448284210527,
+    "z": 2.350929789473685
+  },
+  "map": true,
+  "inventory": true,
+  "caseGating": true,
+  "newGame": true,
+  "landscape": [
+    844,
+    390
+  ],
+  "portrait": [
+    390,
+    844
+  ],
+  "overflow": false,
+  "portraitOverflow": false,
+  "errors": []
+}

@@ -1,0 +1,376 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-11T15:07:22.485851+00:00",
+  "title": "Design System: Aftertrace",
+  "extensions": {
+    "colorMeta": {
+      "yellow": {
+        "displayName": "Yellow",
+        "role": "primary",
+        "tonalRamp": [
+          "oklch(15.00% 0.1168 86.17)",
+          "oklch(26.43% 0.1168 86.17)",
+          "oklch(37.86% 0.1168 86.17)",
+          "oklch(49.29% 0.1168 86.17)",
+          "oklch(60.71% 0.1168 86.17)",
+          "oklch(72.14% 0.1168 86.17)",
+          "oklch(83.57% 0.1168 86.17)",
+          "oklch(95.00% 0.1168 86.17)"
+        ]
+      },
+      "ink": {
+        "displayName": "Ink",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.0111 123.46)",
+          "oklch(26.43% 0.0111 123.46)",
+          "oklch(37.86% 0.0111 123.46)",
+          "oklch(49.29% 0.0111 123.46)",
+          "oklch(60.71% 0.0111 123.46)",
+          "oklch(72.14% 0.0111 123.46)",
+          "oklch(83.57% 0.0111 123.46)",
+          "oklch(95.00% 0.0111 123.46)"
+        ]
+      },
+      "line": {
+        "displayName": "Line",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.0331 240.44)",
+          "oklch(26.43% 0.0331 240.44)",
+          "oklch(37.86% 0.0331 240.44)",
+          "oklch(49.29% 0.0331 240.44)",
+          "oklch(60.71% 0.0331 240.44)",
+          "oklch(72.14% 0.0331 240.44)",
+          "oklch(83.57% 0.0331 240.44)",
+          "oklch(95.00% 0.0331 240.44)"
+        ]
+      },
+      "button": {
+        "displayName": "Button",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.0392 240.77)",
+          "oklch(26.43% 0.0392 240.77)",
+          "oklch(37.86% 0.0392 240.77)",
+          "oklch(49.29% 0.0392 240.77)",
+          "oklch(60.71% 0.0392 240.77)",
+          "oklch(72.14% 0.0392 240.77)",
+          "oklch(83.57% 0.0392 240.77)",
+          "oklch(95.00% 0.0392 240.77)"
+        ]
+      },
+      "button-hover": {
+        "displayName": "Button Hover",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.0376 237.39)",
+          "oklch(26.43% 0.0376 237.39)",
+          "oklch(37.86% 0.0376 237.39)",
+          "oklch(49.29% 0.0376 237.39)",
+          "oklch(60.71% 0.0376 237.39)",
+          "oklch(72.14% 0.0376 237.39)",
+          "oklch(83.57% 0.0376 237.39)",
+          "oklch(95.00% 0.0376 237.39)"
+        ]
+      },
+      "button-active": {
+        "displayName": "Button Active",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.0346 236.30)",
+          "oklch(26.43% 0.0346 236.30)",
+          "oklch(37.86% 0.0346 236.30)",
+          "oklch(49.29% 0.0346 236.30)",
+          "oklch(60.71% 0.0346 236.30)",
+          "oklch(72.14% 0.0346 236.30)",
+          "oklch(83.57% 0.0346 236.30)",
+          "oklch(95.00% 0.0346 236.30)"
+        ]
+      },
+      "primary-ink": {
+        "displayName": "Primary Ink",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.0373 250.56)",
+          "oklch(26.43% 0.0373 250.56)",
+          "oklch(37.86% 0.0373 250.56)",
+          "oklch(49.29% 0.0373 250.56)",
+          "oklch(60.71% 0.0373 250.56)",
+          "oklch(72.14% 0.0373 250.56)",
+          "oklch(83.57% 0.0373 250.56)",
+          "oklch(95.00% 0.0373 250.56)"
+        ]
+      },
+      "primary-hover": {
+        "displayName": "Primary Hover",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.0953 87.54)",
+          "oklch(26.43% 0.0953 87.54)",
+          "oklch(37.86% 0.0953 87.54)",
+          "oklch(49.29% 0.0953 87.54)",
+          "oklch(60.71% 0.0953 87.54)",
+          "oklch(72.14% 0.0953 87.54)",
+          "oklch(83.57% 0.0953 87.54)",
+          "oklch(95.00% 0.0953 87.54)"
+        ]
+      },
+      "danger-ink": {
+        "displayName": "Danger Ink",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.0729 41.13)",
+          "oklch(26.43% 0.0729 41.13)",
+          "oklch(37.86% 0.0729 41.13)",
+          "oklch(49.29% 0.0729 41.13)",
+          "oklch(60.71% 0.0729 41.13)",
+          "oklch(72.14% 0.0729 41.13)",
+          "oklch(83.57% 0.0729 41.13)",
+          "oklch(95.00% 0.0729 41.13)"
+        ]
+      },
+      "danger-bg": {
+        "displayName": "Danger Bg",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.0059 0.35)",
+          "oklch(26.43% 0.0059 0.35)",
+          "oklch(37.86% 0.0059 0.35)",
+          "oklch(49.29% 0.0059 0.35)",
+          "oklch(60.71% 0.0059 0.35)",
+          "oklch(72.14% 0.0059 0.35)",
+          "oklch(83.57% 0.0059 0.35)",
+          "oklch(95.00% 0.0059 0.35)"
+        ]
+      },
+      "hud-panel": {
+        "displayName": "Hud Panel",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.0364 244.67)",
+          "oklch(26.43% 0.0364 244.67)",
+          "oklch(37.86% 0.0364 244.67)",
+          "oklch(49.29% 0.0364 244.67)",
+          "oklch(60.71% 0.0364 244.67)",
+          "oklch(72.14% 0.0364 244.67)",
+          "oklch(83.57% 0.0364 244.67)",
+          "oklch(95.00% 0.0364 244.67)"
+        ]
+      },
+      "world-navy": {
+        "displayName": "World Navy",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.0433 248.22)",
+          "oklch(26.43% 0.0433 248.22)",
+          "oklch(37.86% 0.0433 248.22)",
+          "oklch(49.29% 0.0433 248.22)",
+          "oklch(60.71% 0.0433 248.22)",
+          "oklch(72.14% 0.0433 248.22)",
+          "oklch(83.57% 0.0433 248.22)",
+          "oklch(95.00% 0.0433 248.22)"
+        ]
+      },
+      "world-yellow": {
+        "displayName": "World Yellow",
+        "role": "primary",
+        "tonalRamp": [
+          "oklch(15.00% 0.1180 85.83)",
+          "oklch(26.43% 0.1180 85.83)",
+          "oklch(37.86% 0.1180 85.83)",
+          "oklch(49.29% 0.1180 85.83)",
+          "oklch(60.71% 0.1180 85.83)",
+          "oklch(72.14% 0.1180 85.83)",
+          "oklch(83.57% 0.1180 85.83)",
+          "oklch(95.00% 0.1180 85.83)"
+        ]
+      },
+      "world-trim": {
+        "displayName": "World Trim",
+        "role": "secondary",
+        "tonalRamp": [
+          "oklch(15.00% 0.0411 78.46)",
+          "oklch(26.43% 0.0411 78.46)",
+          "oklch(37.86% 0.0411 78.46)",
+          "oklch(49.29% 0.0411 78.46)",
+          "oklch(60.71% 0.0411 78.46)",
+          "oklch(72.14% 0.0411 78.46)",
+          "oklch(83.57% 0.0411 78.46)",
+          "oklch(95.00% 0.0411 78.46)"
+        ]
+      },
+      "world-roof": {
+        "displayName": "World Roof",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.0302 243.12)",
+          "oklch(26.43% 0.0302 243.12)",
+          "oklch(37.86% 0.0302 243.12)",
+          "oklch(49.29% 0.0302 243.12)",
+          "oklch(60.71% 0.0302 243.12)",
+          "oklch(72.14% 0.0302 243.12)",
+          "oklch(83.57% 0.0302 243.12)",
+          "oklch(95.00% 0.0302 243.12)"
+        ]
+      },
+      "window-warm": {
+        "displayName": "Window Warm",
+        "role": "secondary",
+        "tonalRamp": [
+          "oklch(15.00% 0.0910 80.81)",
+          "oklch(26.43% 0.0910 80.81)",
+          "oklch(37.86% 0.0910 80.81)",
+          "oklch(49.29% 0.0910 80.81)",
+          "oklch(60.71% 0.0910 80.81)",
+          "oklch(72.14% 0.0910 80.81)",
+          "oklch(83.57% 0.0910 80.81)",
+          "oklch(95.00% 0.0910 80.81)"
+        ]
+      }
+    },
+    "shadows": [
+      {
+        "name": "hud-ambient",
+        "value": "0 6px 24px #18263133",
+        "purpose": "Objective and minimap separation."
+      },
+      {
+        "name": "drawer-separation",
+        "value": "-10px 0 50px #0c21374d",
+        "purpose": "Reading sheet elevation."
+      },
+      {
+        "name": "entry-lift",
+        "value": "0 14px 55px #11263755",
+        "purpose": "Introduction panel."
+      }
+    ],
+    "motion": [
+      {
+        "name": "button-background",
+        "value": "background .15s",
+        "purpose": "Button states; disabled by reduced-motion CSS."
+      },
+      {
+        "name": "toast",
+        "value": "opacity .2s, transform .2s",
+        "purpose": "Transient message appearance; disabled by reduced-motion CSS."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact-width",
+        "value": "(max-width:1050px)"
+      },
+      {
+        "name": "short-landscape",
+        "value": "(max-height:540px) and (orientation:landscape)"
+      },
+      {
+        "name": "portrait",
+        "value": "(orientation:portrait)"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Slate button",
+      "kind": "button",
+      "html": "<button class=\"ds-button\">Continue investigation</button>",
+      "css": ".ds-button{font:600 15px Barlow,sans-serif;color:var(--ink,#edf0e8);background:#2a4050;border:0;min-height:46px;padding:12px 16px;border-radius:5px;cursor:pointer;transition:background .15s}.ds-button:hover{background:#3b5261}.ds-button:active{background:#516775}.ds-button:disabled{opacity:.58;cursor:default}.ds-button:focus-visible{outline:3px solid var(--yellow,#edc66d);outline-offset:3px}@media(prefers-reduced-motion:reduce){.ds-button{transition:none}}",
+      "description": "Ordinary sheet action.",
+      "refersTo": "button"
+    },
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "html": "<button class=\"ds-button ds-primary\">Compare suspects &amp; assess arrest</button>",
+      "css": ".ds-button{font:600 15px Barlow,sans-serif;color:var(--ink,#edf0e8);background:#2a4050;border:0;min-height:46px;padding:12px 16px;border-radius:5px;cursor:pointer;transition:background .15s}.ds-button:hover{background:#3b5261}.ds-button:active{background:#516775}.ds-button:disabled{opacity:.58;cursor:default}.ds-button:focus-visible{outline:3px solid var(--yellow,#edc66d);outline-offset:3px}@media(prefers-reduced-motion:reduce){.ds-button{transition:none}}.ds-primary{background:var(--yellow,#edc66d);color:#233344;display:flex;align-items:center;justify-content:space-between;gap:16px}.ds-primary:hover{background:#f7d992}",
+      "description": "Warm primary action.",
+      "refersTo": "button-primary"
+    },
+    {
+      "name": "Reset button",
+      "kind": "button",
+      "html": "<button class=\"ds-button ds-danger\">Start a different chain of events</button>",
+      "css": ".ds-button{font:600 15px Barlow,sans-serif;color:var(--ink,#edf0e8);background:#2a4050;border:0;min-height:46px;padding:12px 16px;border-radius:5px;cursor:pointer;transition:background .15s}.ds-button:hover{background:#3b5261}.ds-button:active{background:#516775}.ds-button:disabled{opacity:.58;cursor:default}.ds-button:focus-visible{outline:3px solid var(--yellow,#edc66d);outline-offset:3px}@media(prefers-reduced-motion:reduce){.ds-button{transition:none}}.ds-danger{color:#edb49f;background:#3a3637}.ds-danger:hover,.ds-danger:active{background:#3a3637}",
+      "description": "Subdued new-world action.",
+      "refersTo": "button-danger"
+    },
+    {
+      "name": "Suspect select",
+      "kind": "input",
+      "html": "<label class=\"ds-label\" for=\"ds-suspect\">Compare suspect</label><select class=\"ds-select\" id=\"ds-suspect\"><option>Ellis Vale \u00b7 Criminal</option><option>Noah Reed \u00b7 Civilian</option></select>",
+      "css": ".ds-label{display:block;color:#b9c9cb;font:12px Barlow,sans-serif;margin:0 0 8px}.ds-select{font:15px Barlow,sans-serif;width:100%;padding:14px;background:#2d4250;border:1px solid #637885;border-radius:4px;color:#f0ece0;min-height:48px}.ds-select:focus-visible{outline:3px solid var(--yellow,#edc66d);outline-offset:3px}",
+      "description": "Native full-width comparison control."
+    },
+    {
+      "name": "Case navigation",
+      "kind": "nav",
+      "html": "<nav class=\"ds-tabs\"><button class=\"ds-button ds-active\">Facts \u00b7 4</button><button class=\"ds-button\">Compare suspects</button></nav>",
+      "css": ".ds-button{font:600 15px Barlow,sans-serif;color:var(--ink,#edf0e8);background:#2a4050;border:0;min-height:46px;padding:12px 16px;border-radius:5px;cursor:pointer;transition:background .15s}.ds-button:hover{background:#3b5261}.ds-button:active{background:#516775}.ds-button:disabled{opacity:.58;cursor:default}.ds-button:focus-visible{outline:3px solid var(--yellow,#edc66d);outline-offset:3px}@media(prefers-reduced-motion:reduce){.ds-button{transition:none}}.ds-tabs{display:flex;gap:5px}.ds-tabs .ds-button{flex:1;font-size:12px}.ds-tabs .ds-active{color:var(--yellow,#edc66d);background:#344855}",
+      "description": "Compact equal-width sheet navigation."
+    },
+    {
+      "name": "Objective panel",
+      "kind": "card",
+      "html": "<section class=\"ds-objective\"><span>The contract</span><p>Answer the payphone on Mercer Street.</p><div>Payphone \u00b7 2 m</div></section>",
+      "css": ".ds-objective{font:15px Barlow,sans-serif;color:var(--ink,#edf0e8);max-width:315px;padding:15px 18px;background:#1b2d3cf5;border-radius:5px;box-shadow:0 6px 24px #18263133}.ds-objective>span{color:var(--yellow,#edc66d);font-weight:600}.ds-objective p{margin:7px 0 0;line-height:1.4;font-size:14px}.ds-objective>div{margin-top:10px;font-size:11px;color:#bfc8c4}",
+      "description": "Current instruction with supporting distance.",
+      "refersTo": "objective"
+    },
+    {
+      "name": "Phase label",
+      "kind": "chip",
+      "html": "<div class=\"ds-phase\"><i></i><span>Ellis Vale \u00b7 Criminal</span><time>21:00</time></div>",
+      "css": ".ds-phase{display:inline-flex;align-items:center;gap:8px;color:var(--ink,#edf0e8);background:#192d3dec;padding:10px 13px;border-radius:4px;font:600 12px Barlow,sans-serif}.ds-phase i{width:6px;height:6px;background:var(--yellow,#edc66d);border-radius:50%}.ds-phase time{padding-left:10px;border-left:1px solid #60717b;font-variant-numeric:tabular-nums;color:#c4d0d0}",
+      "description": "Informational phase and stable clock; not a filter."
+    },
+    {
+      "name": "Evidence row",
+      "kind": "custom",
+      "html": "<article class=\"ds-evidence\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.65\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 7h12v13H6zM9 7V4h6v3M9 11h6\"/></svg><div><h3>Recovered firearm</h3><p>Sealed evidence \u00b7 recovered in district</p><button class=\"ds-button ds-test\">Ballistic analysis <span>Submit \u00b7 30s</span></button></div></article>",
+      "css": ".ds-button{font:600 15px Barlow,sans-serif;color:var(--ink,#edf0e8);background:#2a4050;border:0;min-height:46px;padding:12px 16px;border-radius:5px;cursor:pointer;transition:background .15s}.ds-button:hover{background:#3b5261}.ds-button:active{background:#516775}.ds-button:disabled{opacity:.58;cursor:default}.ds-button:focus-visible{outline:3px solid var(--yellow,#edc66d);outline-offset:3px}@media(prefers-reduced-motion:reduce){.ds-button{transition:none}}.ds-evidence{display:flex;gap:15px;padding:20px 0;border-bottom:1px solid var(--line,#405361);font-family:Barlow,sans-serif;color:var(--ink,#edf0e8)}.ds-evidence>svg{height:30px;width:30px;flex-shrink:0;color:var(--yellow,#edc66d);margin-top:4px}.ds-evidence>div{flex:1}.ds-evidence h3{font-size:15px;margin:0 0 5px;font-weight:600}.ds-evidence p{font-size:12px;margin:0;color:#d2dcdb;line-height:1.55}.ds-test{margin-top:12px;width:100%;display:flex;justify-content:space-between;gap:8px;text-align:left;font-size:12px;padding:12px;min-height:45px}.ds-test span{font-size:10px;font-weight:400;color:#d9dfd8;flex-shrink:0}",
+      "description": "Ruled evidence with an inline test action."
+    }
+  ],
+  "narrative": {
+    "northStar": "The district remembers",
+    "overview": "A navigable miniature brick district carries the visual identity: warm windows, slate roofs, faceted trees and long navy shadows. Compact dark controls sit over the world; case sheets use quiet rules and readable sentences. The world remains spatially present while the player moves, chooses and reads.",
+    "keyCharacteristics": [
+      "Orthographic geometry and warm architectural detail.",
+      "Compact navy panels with restrained yellow actions.",
+      "Condensed headings paired with plain sentence text.",
+      "Evidence and provenance arranged in ruled rows."
+    ],
+    "rules": [
+      {
+        "name": "The Shared Beacon Rule",
+        "body": "Yellow connects the primary action, destination labels and world rings; secondary controls remain slate.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two Widths Rule",
+        "body": "Use Barlow Condensed for prominent headings and Barlow for instructions, controls and evidence.",
+        "section": "typography"
+      },
+      {
+        "name": "The Visible Walker Rule",
+        "body": "Buildings between the camera and player fade so movement stays legible within the district.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do preserve the warm brick, window light and navy structural contrast.",
+      "Do use sentence text and ruled rows for case evidence and outcomes.",
+      "Do retain simultaneous movement and action areas, safe-area offsets and visible keyboard focus.",
+      "Do use inline SVG line icons for interface controls."
+    ],
+    "donts": [
+      "Don't replace the navigable geometry with a flat scene image.",
+      "Don't use the warm primary action treatment for every control.",
+      "Don't treat tiny decorative copy or the runtime generic sign font as reusable typography."
+    ]
+  }
+}

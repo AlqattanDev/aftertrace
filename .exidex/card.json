@@ -1,0 +1,21 @@
+{
+  "slug": "aftertrace",
+  "title": "AFTERTRACE",
+  "tagline": "A crime simulation where the evidence you leave as the criminal is the evidence you must find as the detective. Nothing disappears; it waits to be found.",
+  "kind": "game",
+  "platform": "both",
+  "entry": "/aftertrace/play/",
+  "showcase": "public",
+  "repo": "https://github.com/AlqattanDev/aftertrace",
+  "order": 10,
+  "hidden": false,
+  "tags": ["game", "three.js", "typescript", "simulation", "isometric"],
+  "accent": "#EDC66D",
+  "thumb": "/aftertrace/thumb.png",
+  "screenshots": [
+    "/aftertrace/thumb.png",
+    "/aftertrace/shots/intro.png",
+    "/aftertrace/shots/outcome.png",
+    "/aftertrace/shots/mobile.png"
+  ]
+}

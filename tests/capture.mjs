@@ -1,0 +1,5 @@
+import {chromium} from '@playwright/test';
+const browser=await chromium.launch({channel:'chrome',headless:true});
+const desktop=await browser.newContext({viewport:{width:1440,height:900},deviceScaleFactor:1});
+const p=await desktop.newPage();const errors=[];p.on('pageerror',e=>errors.push(e.message));await p.goto('http://localhost:5173');await p.getByRole('button',{name:'Enter Mercer District'}).click();await p.waitForTimeout(2200);await p.screenshot({path:'.impeccable/review/desktop.png'});console.log('desktop',await p.evaluate(()=>window.aftertraceDiagnostics));
+const mobile=await browser.newContext({viewport:{width:844,height:390},deviceScaleFactor:1,isMobile:true,hasTouch:true});const m=await mobile.newPage();await m.goto('http://localhost:5173');await m.getByRole('button',{name:'Enter Mercer District'}).tap();await m.waitForTimeout(1600);await m.screenshot({path:'.impeccable/review/mobile.png'});console.log('mobile',await m.evaluate(()=>window.aftertraceDiagnostics));console.log('errors',errors);await browser.close();
