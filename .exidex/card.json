@@ -9,7 +9,7 @@
   "repo": "https://github.com/AlqattanDev/aftertrace",
   "order": 10,
   "hidden": false,
-  "tags": ["game", "three.js", "typescript", "simulation", "isometric"],
+  "tags": ["three.js", "typescript", "simulation", "isometric"],
   "accent": "#EDC66D",
   "thumb": "/aftertrace/thumb.png",
   "screenshots": [
