@@ -9,7 +9,7 @@
     "test": "node --import tsx --test tests/*.test.ts",
     "preview": "vite preview --host 0.0.0.0",
     "build:showcase": "tsc --noEmit && vite build --mode showcase",
-    "test:browser": "node tests/browser.mjs"
+    "test:browser": "node --import tsx tests/browser.mjs"
   },
   "dependencies": {
     "three": "^0.180.0"

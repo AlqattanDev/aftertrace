@@ -248,7 +248,9 @@ function finishCase() {
   if (!result.ok) { announce(result.message); return; }
   state = result.state;
   if (result.correct) {
-    isNewBest = !profile.best || state.result!.score > profile.best.score;
+    const completed = state.result!;
+    isNewBest = !profile.best || completed.score > profile.best.score ||
+      (completed.score === profile.best.score && completed.elapsedSeconds < profile.best.elapsedSeconds);
     // Store the result first so startup can finish awarding an interrupted save.
     saveRun(state, elapsedSeconds);
     profile = awardResult(profile, state);
@@ -317,7 +319,7 @@ function suspects() {
 }
 function renderConsole() {
   if (intro) return `<div class="intro-invitation"><div class="relic-name">${relicIcon(state.relic.id)}<span>${esc(state.relic.name)} is waiting.</span></div>${button(starting ? 'Opening the gallery…' : restored || started ? 'Continue your case' : 'Play a case', 'begin', starting)}<div class="intro-facts"><span>${icon('clock')}About 2 minutes</span><span>${icon('spark')}One player, both sides</span></div><div class="collection-heading"><span>Your little collection</span><b>${profile.collection.filter(Boolean).length} / 6</b></div>${collection()}<div class="personal-best"><span>Best <b>${profile.best ? number(profile.best.score) : '—'}</b></span><span>Streak <b>${profile.streak}</b></span></div></div>`;
-  if (state.phase === 'entry') return selectedEntry ? timing(`Through the ${spotName(selectedEntry).toLowerCase()}.`, 'Slip inside', true) : `${heistSteps()}<h2 class="console-title">Every entrance leaves a trace.</h2>${options(ENTRIES)}<p class="quiet-note">Choose a way in.</p>`;
+  if (state.phase === 'entry') return selectedEntry ? timing(`Through the ${spotName(selectedEntry).toLowerCase()}.`, 'Slip inside', true) : `${heistSteps()}<h2 class="console-title">Every entrance leaves a trace.</h2>${options(ENTRIES)}`;
   if (state.phase === 'take') return timing('One very tempting treasure.', 'Lift the treasure');
   if (state.phase === 'stash') return selectedStash ? timing(`Tuck it by the ${spotName(selectedStash).toLowerCase()}.`, 'Hide the treasure', true) : `${heistSteps()}<h2 class="console-title">Where shall we hide it?</h2>${options(STASHES)}<p class="quiet-note">You will be back to find it.</p>`;
   if (state.phase === 'handoff') {
@@ -329,7 +331,7 @@ function renderConsole() {
       const selected = state.suspects.find(suspect => suspect.id === selectedSuspect);
       return `<div class="evidence-heading"><span>${icon('check')}All three clues</span><b>Treasure recovered</b></div>${evidence()}${noticeType === 'wrong' ? `<p class="wrong-notice" role="status">${notice}</p>` : ''}${suspects()}${button(selected ? `Name ${esc(selected.name.split(' ')[0])}` : 'Choose the guest who matches', 'accuse', !selected, 'search')}`;
     }
-    return `<div class="evidence-heading"><span>${icon('search')}Follow your trail</span><b>${state.found.length} / 3 clues</b></div>${evidence()}<div class="discovery ${noticeType}">${lastClue ? `<span class="discovery-icon ${lastClue.value}">${traitIcon(lastClue.id, lastClue.value)}</span><div><strong>${lastClue.id === 'charm' ? 'Treasure recovered!' : esc(lastClue.label)}</strong><p>${esc(lastClue.detail)}</p></div>` : `${icon(noticeType === 'empty' ? 'search' : 'hint')}<p>${notice || 'Start with the empty display. What did you leave behind?'}</p>`}</div><button class="hint-button" data-action="hint">${icon('hint')}<span>${state.hintSpot ? 'Show my marked clue' : 'Give me a nudge'}</span><small>${state.hintSpot ? 'Already counted' : '−' + HINT_COST + ' points'}</small></button>`;
+    return `<div class="evidence-heading"><span>${icon('search')}Follow your trail</span><b>${state.found.length} / 3 clues</b></div>${evidence()}<div class="discovery ${noticeType}">${lastClue ? `<span class="discovery-icon ${lastClue.value}">${traitIcon(lastClue.id, lastClue.value)}</span><div><strong>${lastClue.id === 'charm' ? 'Treasure recovered!' : esc(lastClue.label)}</strong><p>${esc(lastClue.detail)}</p></div>` : `${icon(noticeType === 'empty' ? 'search' : 'hint')}<p>${notice || 'Three clues waiting to be found.'}</p>`}</div><button class="hint-button" data-action="hint">${icon('hint')}<span>${state.hintSpot ? 'Show my marked clue' : 'Give me a nudge'}</span><small>${state.hintSpot ? 'Already counted' : '−' + HINT_COST + ' points'}</small></button>`;
   }
   const result = state.result!, culprit = state.suspects.find(suspect => suspect.id === result.culpritId)!;
   return `<div class="result-sheet">${stars(result.stars, 'result-stars')}<h2 class="result-title">${result.title}.</h2><div class="result-score"><strong>${number(result.score)}</strong><span>${isNewBest ? 'A new personal best' : 'points, beautifully earned'}</span></div><p class="culprit-reveal">It was <b>${esc(culprit.name)}</b>.</p><div class="solved-trail" aria-label="The trail you made and solved"><span>${icon(state.entry as IconName)}${spotName(state.entry)}</span>${icon('arrow')}<span>${icon('pedestal')}Display</span>${icon('arrow')}<span>${icon(state.stash as IconName)}${spotName(state.stash)}</span></div><dl class="score-breakdown"><div><dt>Three clues</dt><dd>+${result.evidence}</dd></div><div><dt>Heist timing</dt><dd>+${result.timing}</dd></div><div><dt>Case pace</dt><dd>+${result.speed}</dd></div><div><dt>First guess</dt><dd>+${result.firstTry}</dd></div>${result.penalties ? `<div><dt>Hints &amp; guesses</dt><dd>−${result.penalties}</dd></div>` : ''}</dl><div class="result-reward">${relicIcon(state.relic.id)}<span>${esc(state.relic.name)}<small>Added to your collection</small></span>${stars(profile.collection[RELICS.findIndex(relic => relic.id === state.relic.id)] || 0)}</div>${button('One more mystery', 'next')}<p class="replay-note">${result.stars < 3 ? `${number(STAR_THRESHOLDS.three)} points earns three stars. ` : ''}${profile.streak ? `${profile.streak} first-guess ${profile.streak === 1 ? 'solve' : 'solves'} in a row.` : 'A fresh trail. A new little mystery.'}</p></div>`;
@@ -366,9 +368,16 @@ function positionHotspots() {
   if (!gallery) return;
   const stage = $('#stage'), width = stage.clientWidth, height = stage.clientHeight;
   const targets = Array.from(document.querySelectorAll<HTMLElement>('#hotspots [data-spot]'));
-  // Seven thumb-sized labels need their own space when the miniature is short.
+  const projected = targets.map(el => {
+    const point = gallery!.project(el.dataset.spot!);
+    return { el, point, x: Math.max(38, Math.min(width - 38, point.x * width)), y: Math.max(38, Math.min(height - 40, point.y * height)) };
+  });
+  const crowded = projected.some((a, index) => projected.slice(index + 1).some(b =>
+    Math.abs(a.x - b.x) < (a.el.offsetWidth + b.el.offsetWidth) / 2 + 8 &&
+    Math.abs(a.y - b.y) < (a.el.offsetHeight + b.el.offsetHeight) / 2 + 8));
+  // Keep every label readable in both short rooms and narrow desktop columns.
   // Keep them in stable rows and connect each label to its exact scene anchor.
-  const compact = targets.length === 7 && height < 360;
+  const compact = targets.length === 7 && (height < 360 || crowded);
   const rows: Record<string, [number, number]> = {
     window: [.35, 0], door: [.66, 0], pedestal: [.40, 1], clock: [.83, 1],
     planter: [.16, 2], bench: [.48, 2], terrace: [.82, 2],
@@ -376,11 +385,10 @@ function positionHotspots() {
   const leaders = document.querySelector<SVGSVGElement>('#hotspot-leaders');
   leaders?.setAttribute('viewBox', `0 0 ${width} ${height}`);
   if (leaders) leaders.style.display = compact ? '' : 'none';
-  targets.forEach(el => {
-    const point = gallery!.project(el.dataset.spot!);
-    const row = rows[el.dataset.spot!], spread = Math.min(width, 360);
-    const x = compact ? (width - spread) / 2 + row[0] * spread : Math.max(38, Math.min(width - 38, point.x * width));
-    const y = compact ? 38 + row[1] * (height - 76) / 2 : Math.max(38, Math.min(height - 40, point.y * height));
+  projected.forEach(({ el, point, x: anchorX, y: anchorY }) => {
+    const row = rows[el.dataset.spot!], spread = Math.min(width, 360), rise = Math.min(height, 360);
+    const x = compact ? (width - spread) / 2 + row[0] * spread : anchorX;
+    const y = compact ? (height - rise) / 2 + 38 + row[1] * (rise - 76) / 2 : anchorY;
     el.style.left = x + 'px';
     el.style.top = y + 'px';
     el.style.visibility = point.visible ? 'visible' : 'hidden';
@@ -401,7 +409,8 @@ function render() {
   $('#console-content').innerHTML = renderConsole(); $('#stage-caption').hidden = !intro;
   updateHeading(); renderSound(); syncScene(); renderHotspots();
   $('#save-status').textContent = storageOK ? (started ? 'Case saved' : 'Made for a little spare time') : 'Playing without saves';
-  $('#run-time').textContent = intro ? '' : state.phase === 'result' ? `Solved in ${duration(state.result!.elapsedSeconds)}` : duration(elapsedSeconds);
+  $('#run-time').textContent = intro ? '' : state.phase === 'handoff' ? 'Clock paused' :
+    state.phase === 'result' ? `Solved in ${duration(state.result!.elapsedSeconds)}` : duration(elapsedSeconds);
   requestAnimationFrame(() => { gallery?.resize(); positionHotspots(); });
 }
 $('#app').addEventListener('click', event => {
@@ -457,6 +466,7 @@ new ResizeObserver(() => { gallery?.resize(); positionHotspots(); }).observe($('
 function frame(now: number) {
   const raw = Math.max(0, (now - previousFrame) / 1000); previousFrame = now;
   if (!document.hidden && !paused && !contextLost) {
+    // The role-switch reveal is reading time; the case clock resumes with investigation.
     if (!intro && ['entry', 'take', 'stash', 'investigate'].includes(state.phase)) {
       elapsedSeconds += raw; saveSeconds += raw;
       if (saveSeconds >= 3) { saveSeconds = 0; persist(); }
@@ -470,7 +480,7 @@ function frame(now: number) {
     }
     gallery?.render(Math.min(raw, .05));
   }
-  if (clockSecond !== Math.floor(elapsedSeconds)) { clockSecond = Math.floor(elapsedSeconds); if (!intro && state.phase !== 'result') $('#run-time').textContent = duration(elapsedSeconds); }
+  if (clockSecond !== Math.floor(elapsedSeconds)) { clockSecond = Math.floor(elapsedSeconds); if (!intro && state.phase !== 'result' && state.phase !== 'handoff') $('#run-time').textContent = duration(elapsedSeconds); }
   if (state.phase === 'result' && resultSubmitSecond !== Math.floor(now / 1000)) { resultSubmitSecond = Math.floor(now / 1000); submitArcade(); }
   requestAnimationFrame(frame);
 }

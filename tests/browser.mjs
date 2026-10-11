@@ -1,7 +1,7 @@
 /**
  * Real browser regression, separate from the pure-rule npm test command.
- * node tests/browser.mjs
- * BROWSER_PATH=/path/to/chromium QA_SHOWCASE=1 node tests/browser.mjs
+ * node --import tsx tests/browser.mjs
+ * BROWSER_PATH=/path/to/chromium QA_SHOWCASE=1 node --import tsx tests/browser.mjs
  * Uses Playwright's installed Chromium by default; never downloads a browser.
  * Vite and Chromium share one process tree for isolated localhost environments.
  */
@@ -11,6 +11,8 @@ import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { chromium } from 'playwright';
 import { createServer, preview } from 'vite';
+import { createCase, enterGallery, takeRelic, hideRelic, beginInvestigation, inspectSpot, accuse } from '../src/rules.ts';
+import { loadProfile, awardResult, saveProfile, saveRun } from '../src/storage.ts';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const showcase = process.env.QA_SHOWCASE === '1';
@@ -43,7 +45,7 @@ async function openCase({ width = 1440, height = 900, input = 'mouse', host = 'o
   let closing = false;
   await context.exposeBinding('__qaRecordArcade', (_source, run) => { calls.push(run); });
   await context.addInitScript(({ host, fixture, RUN, PROFILE }) => {
-    // Fixtures are snapshots earned through the normal UI below, never invented rules state.
+    // Fixtures use normal UI snapshots or the exported rules/storage APIs, never invented state.
     if (fixture && !sessionStorage.getItem('aftertrace.qa.fixture')) {
       localStorage.setItem(RUN, fixture.run);
       if (fixture.profile) localStorage.setItem(PROFILE, fixture.profile);
@@ -150,7 +152,7 @@ async function choose(test, spot) {
     await test.page.keyboard.press(key);
   } else await activate(test, `.place-option[data-spot="${spot}"]`);
 }
-async function finishHeist(test, { entry = 'window', stash = 'clock', fromTake = false } = {}) {
+async function finishHeist(test, { entry = 'window', stash = 'clock', fromTake = false, verifyHandoff = false } = {}) {
   if (!fromTake) {
     await begin(test);
     await choose(test, entry);
@@ -162,8 +164,20 @@ async function finishHeist(test, { entry = 'window', stash = 'clock', fromTake =
   await choose(test, stash);
   await timing(test);
   await screen(test.page, 'handoff');
+  let handoffElapsed;
+  if (verifyHandoff) {
+    assert.match(await test.page.locator('#game').innerText(), /\bClock paused\b/, 'The handoff explains its paused clock');
+    const clock = await test.page.locator('#run-time').innerText();
+    const elapsed = (await state(test.page)).run.elapsedSeconds;
+    handoffElapsed = elapsed;
+    await test.page.waitForTimeout(1100);
+    assert.equal(await test.page.locator('#run-time').innerText(), clock, 'The visible handoff clock stays still');
+    assert.equal((await state(test.page)).run.elapsedSeconds, elapsed, 'Handoff reading time is excluded from the saved clock');
+  }
   await activate(test, '#primary-action[data-action="investigate"]');
   await screen(test.page, 'investigate');
+  if (verifyHandoff) assert.ok((await state(test.page)).run.elapsedSeconds < handoffElapsed + .5,
+    'Resuming investigation persists a clock that excludes the handoff wait');
   await test.page.waitForFunction(() => document.querySelectorAll('#hotspots button').length === 7);
 }
 async function search(test, spot) {
@@ -264,7 +278,7 @@ try {
       let saved=await state(test.page);
       assert.equal(saved.run.state.id,before.run.state.id);
       assert.deepEqual(saved.run.state.traces,before.run.state.traces);
-      await finishHeist(test,{fromTake:true});
+      await finishHeist(test,{fromTake:true,verifyHandoff:true});
       investigationFixture=await snapshot(test.page);
       await search(test,'pedestal');
       const discovered=(await state(test.page)).run.state.found;
@@ -327,6 +341,48 @@ try {
     } finally { await test.close(); }
   });
 
+  await check('equal-score best: a faster 3000-point solve earns the personal-best label',async()=>{
+    const memory = new Map();
+    const storage = {
+      getItem:key=>memory.get(key) ?? null,
+      setItem:(key,value)=>{memory.set(key,value);},
+      removeItem:key=>{memory.delete(key);},
+    };
+    const advance = action => { assert.equal(action.ok,true); return action.state; };
+    const perfectInvestigation = (seed,relic) => {
+      let run = createCase(seed,relic);
+      run = advance(enterGallery(run,'window',1));
+      run = advance(takeRelic(run,1));
+      run = advance(hideRelic(run,'clock',1));
+      run = advance(beginInvestigation(run));
+      for(const spot of ['pedestal','window','clock']) run = advance(inspectSpot(run,spot));
+      return run;
+    };
+    // Construct both valid cases through game actions; persist through the real validators.
+    let previous = perfectInvestigation('browser-previous-perfect-best',0);
+    previous = advance(accuse(previous,previous.culpritId,40));
+    assert.equal(previous.result.score,3000);
+    const profile = awardResult(loadProfile(storage),previous);
+    assert.equal(saveProfile(profile,storage),true);
+    const current = perfectInvestigation('browser-faster-perfect-best',1);
+    assert.notEqual(current.id,previous.id);
+    assert.equal(saveRun(current,10,storage),true);
+    const test = await openCase({fixture:{run:storage.getItem(RUN),profile:storage.getItem(PROFILE)}});
+    try {
+      await begin(test); await screen(test.page,'compare');
+      const match = await matchVisibleTraits(test.page);
+      await activate(test,`[data-suspect="${match.correct}"]`);
+      await activate(test,'#primary-action'); await screen(test.page,'result');
+      const saved = await state(test.page);
+      assert.equal(saved.run.state.result.score,3000);
+      assert.equal(saved.profile.best.score,3000);
+      assert.ok(saved.profile.best.elapsedSeconds >= 10 && saved.profile.best.elapsedSeconds < 40);
+      assert.equal(saved.profile.best.elapsedSeconds,saved.run.state.result.elapsedSeconds);
+      assert.equal(saved.profile.cases,2);
+      assert.equal(await test.page.locator('.result-score > span').innerText(),'A new personal best');
+    } finally { await test.close(); }
+  });
+
   if(investigationFixture) for(const [width,height,name] of [[320,568,'phone-small'],[360,740,null],[844,390,'landscape']]) {
     await check(`restored touch layout ${width}x${height}: all seven targets`,async()=>{
       const test=await openCase({width,height,input:'touch',fixture:investigationFixture});
@@ -339,6 +395,22 @@ try {
       } finally { await test.close(); }
     });
   }
+
+  if(investigationFixture) await check('narrow desktop/tablet geometry: 721, 768, 820 and 1024 pixels',async()=>{
+    const failures = [];
+    for(const [width,height] of [[721,900],[768,900],[820,900],[1024,768]]) {
+      const test = await openCase({width,height,fixture:investigationFixture});
+      try {
+        await begin(test); await screen(test.page,'investigate');
+        await geometry(test,`${width}x${height}`);
+      } catch(error) { failures.push(`${width}x${height}: ${error.message}`); }
+      finally {
+        try { await test.close(); }
+        catch(error) { failures.push(`${width}x${height}: ${error.message}`); }
+      }
+    }
+    assert.deepEqual(failures,[]);
+  });
 
   if(completedFixture) {
     await check('interrupted-save fixture: a result rebuilds a missing profile once',async()=>{
