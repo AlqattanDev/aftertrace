@@ -1,31 +1,27 @@
 <!doctype html>
-<html lang="en" style="--accent:#EDC66D">
+<html lang="en" style="--accent:#7254a0">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>AFTERTRACE — the city remembers</title>
-    <meta
-      name="description"
-      content="A playable crime simulation in one persistent district. The evidence you leave as the criminal is the evidence you must find as the detective."
-    />
+    <meta name="theme-color" content="#49345f" />
+    <title>AFTERTRACE — Steal it. Hide it. Solve it.</title>
+    <meta name="description" content="A tiny gallery heist with a twist: the trail you leave is the case you solve. Steal a curious treasure, switch sides and follow your own clues." />
     <link rel="stylesheet" href="/_showcase/style.css" />
     <style>
-      body { margin: 0; font: 16px/1.6 system-ui, sans-serif; }
-      .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
-      .play-link { display: inline-flex; min-height: 48px; align-items: center; padding: 0 22px; border-radius: 999px; background: #EDC66D; color: #233344; font-weight: 700; text-decoration: none; }
-      .repo-link { display: inline-flex; min-height: 48px; align-items: center; padding: 0 20px; border-radius: 999px; border: 1px solid rgba(237, 198, 109, 0.5); color: #EDC66D; font-weight: 600; text-decoration: none; }
-      .play-note { margin: 8px 0 0; font-size: 13px; color: rgba(255,255,255,0.5); }
-      body.aftertrace-landing .sc-window { max-width: 1440px; }
-      body.aftertrace-landing .sc-body { max-width: none; overflow-x: clip; }
-      .aftertrace-hero { margin: 0 0 38px; background: var(--paper); border: 3px solid var(--ink); box-shadow: 3px 7px 0 #493222; }
-      body.aftertrace-landing .aftertrace-hero img { display: block; width: 100%; max-width: none; height: min(43vw, 520px); object-fit: cover; border: 0; filter: grayscale(1) contrast(1.3); mix-blend-mode: multiply; }
-      .aftertrace-copy { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 16px 40px; }
-      .aftertrace-copy .sc-kicker, .aftertrace-copy .sc-title { grid-column: 1; margin: 0; }
-      .aftertrace-copy .sc-tagline { grid-column: 1; }
-      .aftertrace-copy > p:not([class]) { grid-column: 2; grid-row: 1 / 4; align-self: center; }
-      .aftertrace-copy .sc-pills { grid-column: 2; grid-row: 4; }
-      .aftertrace-copy .actions, .aftertrace-copy .play-note { grid-column: 1 / -1; }
-      @media(max-width: 700px) { .aftertrace-copy { display: block; } .aftertrace-copy > * { margin-top: 18px !important; } body.aftertrace-landing .aftertrace-hero img { height: 58vw; } }
+      body { margin: 0; font: 16px/1.6 system-ui, sans-serif; background: #e9dff4; color: #342743; }
+      body.aftertrace-landing .sc-window { max-width: 1060px; }
+      body.aftertrace-landing .sc-body { overflow-x: clip; }
+      .aftertrace-copy { max-width: 760px; }
+      .aftertrace-copy .sc-tagline { max-width: 620px; }
+      .aftertrace-copy .sc-pills { margin: 24px 0; }
+      .aftertrace-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 28px 0 0; }
+      .aftertrace-actions a { display: inline-flex; min-height: 52px; align-items: center; justify-content: center; padding: 0 24px; border-radius: 14px; text-decoration: none; font-weight: 750; }
+      .aftertrace-actions .play-link { background: #f3bb4c; color: #342743; border: 2px solid #342743; box-shadow: 0 5px 14px #49345f26; }
+      .aftertrace-actions .repo-link { color: inherit; border: 2px solid currentColor; }
+      .aftertrace-actions a:focus-visible { outline: 3px solid #7254a0; outline-offset: 5px; }
+      .aftertrace-actions .play-link:active { transform: translateY(2px); box-shadow: 0 2px 7px #49345f26; }
+      .aftertrace-note { margin: 18px 0 0; font-size: 15px; }
+      @media (max-width: 560px) { .aftertrace-actions .play-link { flex: 1 1 100%; } }
     </style>
   </head>
   <body class="sc-desk aftertrace-landing">
@@ -39,24 +35,22 @@
         </div>
       </header>
       <div class="sc-body">
-        <figure class="aftertrace-hero" data-sc-tilt><img src="thumb.png?w=1200" alt="Mercer Street at 21:00: Ellis Vale beside the payphone, the pawn shop lit behind" /></figure>
         <div class="aftertrace-copy">
-        <p class="sc-kicker">Game · Crime simulation</p>
-        <h1 class="sc-title">AFTERTRACE</h1>
-        <p class="sc-tagline">One district, two perspectives. Commit the crime, then come back as the detective and find what you left behind.</p>
-        <div class="sc-pills">
-          <span class="sc-pill">Persistent evidence</span>
-          <span class="sc-pill">Delayed lab tests</span>
-          <span class="sc-pill">Evidence-based arrest</span>
-          <span class="sc-pill">Phone and desktop</span>
-        </div>
-        <p>Every object keeps its identity, prints and ballistics across disposal, discovery, transfer and reuse. Take the contract, choose the weapon and the casing, choose the dumpster, the river or a shallow grave. Then walk the same streets as the detective: witnesses, records and labs with real delays, and an arrest that has to be argued from facts. Possession alone never proves an incident. TypeScript and Three.js, generated geometry, no engine.</p>
-
-        <div class="actions">
-          <a class="play-link" href="./play/">▶ Play in browser</a>
-          <a class="repo-link" href="/games">More games</a>
-        </div>
-        <p class="play-note">Runs in the browser. Best on a landscape phone or a desktop with WASD and E. Progress saves on this device.</p>
+          <h1 class="sc-title">AFTERTRACE</h1>
+          <p class="sc-tagline">Steal it. Hide it. Solve it.</p>
+          <p>Pull off a little gallery heist, then switch sides. The trail you leave as the culprit is the case you solve as the detective.</p>
+          <div class="sc-pills">
+            <span class="sc-pill">One room, two roles</span>
+            <span class="sc-pill">Three clues</span>
+            <span class="sc-pill">Six treasures</span>
+            <span class="sc-pill">Phone and desktop</span>
+          </div>
+          <p>Time your heist, search the gallery and match the clues to a suspect. Recover the treasure, earn your stars, then see if you can beat your best.</p>
+          <div class="aftertrace-actions">
+            <a class="play-link" href="./play/">Play a case <span aria-hidden="true">&nbsp;→</span></a>
+            <a class="repo-link" href="/games">More games</a>
+          </div>
+          <p class="aftertrace-note">Tap, click or use your keyboard. Portrait phones welcome. No account needed.</p>
         </div>
       </div>
     </main>

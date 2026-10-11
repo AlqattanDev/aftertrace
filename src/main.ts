@@ -1,120 +1,489 @@
 import './style.css';
-import { City } from './scene';
-import { load, save, createWorld, tick, move, dist, PLACES, PEOPLE, objective, clock, acceptContract, acquire, commitCrime, collectCasing, dispose, switchPhase, inspectScene, collectItem, search, question, records, submitTest, arrestAssessment, attemptArrest, closeUnsolved, notify, type World, type Vec, type Disposal } from './sim';
-let world=load(); let panel=''; let selected='ellis'; let waypoint:Vec|undefined; let waypointName=''; let city:City; let lastTouchAction=-1000; let lastPhase=world.phase; let lastActionHTML=''; let lastPanelHTML=''; let showRecap=false; let storageOK=true;let busy:{label:string;start:number;duration:number;origin:Vec;done:()=>void}|null=null;
-const icons={ bag:'<path d="M6 7h12v13H6zM9 7V4h6v3M9 11h6"/>',notes:'<path d="M5 3h14v18H5zM8 8h8M8 12h8M8 16h5"/>',map:'<path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15"/>',help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4 2c-1.5.8-1.5 1-1.5 3M12 17h.01"/>',close:'<path d="m6 6 12 12M18 6 6 18"/>',arrow:'<path d="m9 5 7 7-7 7"/>',finger:'<path d="M6 17c0-6 0-11 6-11s6 5 6 8M3 12c0-6 3-9 9-9s9 4 9 9M9 20v-7c0-4 6-4 6 0v8M12 13v9"/>',sound:'<path d="M4 9h4l5-4v14l-5-4H4zM17 8a6 6 0 0 1 0 8"/>',reset:'<path d="M4 10a8 8 0 1 1 1 8M4 4v6h6"/>'};
-function icon(name:keyof typeof icons){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+icons[name]+'</svg>';}
-const app=document.querySelector<HTMLDivElement>('#app')!;
-app.innerHTML=`<main id="game"><canvas id="world" aria-label="Navigable isometric district"></canvas><div class="vignette"></div>
-<header class="hud"><div class="wordmark">AFTERTRACE<span class="brand-line">THE CITY REMEMBERS</span></div><div class="phase"><span id="phaseDot"></span><span id="phaseName"></span><time id="clock"></time></div></header>
-<section class="objective" aria-label="Current objective"><span id="objectiveTitle">The contract</span><p id="objective"></p><div id="waypoint"></div></section>
-<button id="mapButton" class="minimap" aria-label="Open district map"><canvas id="minimap" width="184" height="156"></canvas><span>MERCER DISTRICT ${icon('arrow')}</span></button>
-<nav class="tools" aria-label="Game tools"><button data-panel="inventory" title="Inventory · I">${icon('bag')}<span>Inventory</span><b id="itemCount">0</b></button><button data-panel="case" title="Case notes · F">${icon('notes')}<span>Case notes</span><b id="factCount">0</b></button><button data-panel="help" aria-label="Controls and help">${icon('help')}</button></nav>
-<div id="worldLabel"></div><div id="toast" role="status" aria-live="polite"></div>
-<div class="movement"><div id="joystick" role="application" aria-label="Movement joystick"><div class="joystick-lines"></div><div id="stick"></div></div><span>WASD / ARROWS</span></div>
-<section id="interaction" aria-label="Nearby actions"><div id="nearby"></div><div id="actions"></div></section>
-<div id="progress" hidden><span></span><div><i></i></div></div>
-<footer class="status"><span id="saveStatus">Saved on this device</span><span id="demoNote">ONE WORLD · TWO PERSPECTIVES</span></footer>
-<aside id="drawer" hidden><div class="drawer-head"><h1 id="panelTitle"></h1><button id="closePanel" aria-label="Close panel">${icon('close')}</button></div><div id="panelBody"></div></aside>
-<section id="welcome" ${world.started?'hidden':''}><div class="welcome-inner"><div class="welcome-rule"></div><h1>Nothing disappears.<br>It waits to be found.</h1><p>One district. A crime. The evidence you leave behind.</p><div class="welcome-phases"><span><b>1</b> Leave a trace</span><span><b>2</b> Build a case</span></div><p class="explain">Play a criminal, then a detective in the <strong>same saved world</strong>. You will know what happened. Your detective must still prove it.</p><button id="begin" class="primary">Enter Mercer District ${icon('arrow')}</button><small>Non-graphic fictional crime · Landscape recommended<br>Headphones optional · Saved automatically</small></div></section>
-<div id="confirm" hidden><div><h2>Start a new world?</h2><p>This replaces the saved district, evidence and pending tests on this browser.</p><button id="doReset" class="primary">Start new game</button><button id="cancelReset">Keep this world</button></div></div>
-</main>`;
-const $=<T extends HTMLElement=HTMLElement>(s:string)=>document.querySelector<T>(s)!;
-try {city=new City($('#world'),$('#minimap'));}catch(e){$('#welcome').hidden=false;$('#welcome .welcome-inner').innerHTML='<h1>WebGL could not start.</h1><p>Enable hardware acceleration or open this game in a browser with WebGL support, then reload.</p><button onclick="location.reload()">Try again</button>';throw e;}
-function sound(freq=420,duration=.09){if(!audioEnabled)return;try{audio??=new AudioContext();void audio.resume();const o=audio.createOscillator(),g=audio.createGain();o.type='sine';o.frequency.value=freq;g.gain.setValueAtTime(.045,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);o.connect(g).connect(audio.destination);o.start();o.stop(audio.currentTime+duration);}catch{}}
-let audio:AudioContext|undefined;let audioEnabled=false;
-function persist(){storageOK=save(world);$('#saveStatus').textContent=storageOK?'Saved on this device':'Save unavailable — allow browser storage';}
-function openPanel(name:string){panel=panel===name?'':name;$('#drawer').hidden=!panel;lastPanelHTML='';renderPanel();}
-function closePanel(){panel='';$('#drawer').hidden=true;}
-$('#begin').onclick=()=>{world.started=true;$('#welcome').hidden=true;notify(world,'Move with the left joystick or WASD. Walk to the payphone, then use the action on the right.');persist();};
-document.querySelectorAll<HTMLButtonElement>('[data-panel]').forEach(b=>b.onclick=()=>openPanel(b.dataset.panel!));
-$('#mapButton').onclick=()=>openPanel('map');$('#closePanel').onclick=closePanel;
-$('#cancelReset').onclick=()=>$('#confirm').hidden=true;
-$('#doReset').onclick=()=>{world=createWorld();world.started=true;waypoint=undefined;showRecap=false;busy=null;keys.clear();joy={x:0,y:0};closePanel();$('#confirm').hidden=true;city.victim.rotation.z=0;city.victim.position.y=.35;city.victim.getObjectByName('ring')!.visible=true;for(const mesh of city.itemMeshes.values())mesh.visible=false;persist();notify(world,'New world started. Answer the payphone.');};
-function requestReset(){$('#confirm').hidden=false;}
-function doAction(fn:()=>void){fn();sound();persist();lastPanelHTML='';renderHUD();renderPanel();}
-function timed(label:string,duration:number,fn:()=>void){if(busy)return;busy={label,start:world.playSeconds,duration,origin:{...world.player},done:fn};notify(world,label+'… Stay within reach.');}
-const keys=new Set<string>();let joy={x:0,y:0};let joyPointer:number|null=null;let joyCenter={x:0,y:0};
-window.addEventListener('keydown',e=>{if(e.target instanceof HTMLSelectElement)return;const k=e.key.toLowerCase();if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright',' '].includes(k))e.preventDefault();keys.add(k);if(e.repeat)return;if(k==='escape'){closePanel();$('#confirm').hidden=true;}if(k==='i')openPanel('inventory');if(k==='f')openPanel('case');if(k==='m')openPanel('map');if((k==='e'||k===' ')&&!panel&&$('#welcome').hidden){const b=$<HTMLButtonElement>('#actions button');b?.click();}});
-window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>{keys.clear();resetJoy();});document.addEventListener('visibilitychange',()=>{keys.clear();resetJoy();persist();});
-function resetJoy(){joy={x:0,y:0};joyPointer=null;$('#stick').style.transform='translate(0px,0px)';}
-$('#joystick').addEventListener('pointerdown',e=>{if(joyPointer!==null)return;joyPointer=e.pointerId;const r=$('#joystick').getBoundingClientRect();joyCenter={x:r.x+r.width/2,y:r.y+r.height/2};$('#joystick').setPointerCapture(e.pointerId);updateJoy(e);e.preventDefault();});
-function updateJoy(e:PointerEvent){if(e.pointerId!==joyPointer)return;const dx=e.clientX-joyCenter.x,dy=e.clientY-joyCenter.y,len=Math.hypot(dx,dy),radius=38;joy={x:dx/Math.max(radius,len),y:dy/Math.max(radius,len)};$('#stick').style.transform=`translate(${joy.x*radius}px,${joy.y*radius}px)`;}
-$('#joystick').addEventListener('pointermove',updateJoy);$('#joystick').addEventListener('pointerup',e=>{if(e.pointerId===joyPointer)resetJoy();});$('#joystick').addEventListener('pointercancel',resetJoy);$('#joystick').addEventListener('lostpointercapture',resetJoy);
-function defaultGoal():{pos:Vec;name:string}|undefined{
- if(waypoint)return{pos:waypoint,name:waypointName};
- if(world.phase==='criminal'){
- if(!world.accepted)return{pos:PLACES.contract,name:'Payphone'};if(!world.purchase)return{pos:PLACES.pawn,name:'Mercer Pawn'};if(!world.crimeDone)return{pos:PLACES.target,name:'Rowan Pike'};if(!world.disposed)return;return{pos:PLACES.exit,name:'Departure'};
- }if(world.phase==='detective'){if(!world.incidents[0]?.inspected)return{pos:PLACES.target,name:'Scene 01'};if(world.items.some(i=>i.kind==='pistol'&&i.collected))return{pos:PLACES.lab,name:'Forensics'};}return;
+import { createCase, enterGallery, takeRelic, hideRelic, beginInvestigation, inspectSpot, requestHint, accuse, canAccuse, gradeTiming, ENTRIES, STASHES, SPOTS, RELICS, HINT_COST, STAR_THRESHOLDS, type CaseState, type SpotId, type EntryId, type StashId, type Clue, type Suspect } from './rules';
+import { AudioDirector } from './audio';
+import { loadProfile, saveProfile, loadRun, saveRun, awardResult, nextRelic } from './storage';
+import { icon, relicIcon, type IconName } from './icons';
+import type { Gallery } from './scene';
+
+declare global {
+  interface Window {
+    arcade?: { submit: (run: { score: number; meta: Record<string, string | number> }) => void | Promise<unknown> };
+  }
 }
-type Action={id:string;label:string;detail?:string;run:()=>void};let actions:Action[]=[];
-$('#actions').addEventListener('pointerup',e=>{if(e.pointerType!=='touch')return;const button=(e.target as HTMLElement).closest<HTMLButtonElement>('button[data-action]');if(!button||button.disabled)return;e.preventDefault();lastTouchAction=performance.now();const a=actions.find(a=>a.id===button.dataset.action);if(a)doAction(a.run);});
-function nearbyActions():{place:string;actions:Action[]}{const w=world,p=w.player,out:Action[]=[];let place='Explore Mercer District';const near=(v:Vec,r=3.4)=>dist(p,v)<r;
- if(w.phase==='closed')return{place:'Case closed',actions:[{id:'outcome',label:'Review case outcome',run:()=>openPanel('outcome')}]};
- if(w.phase==='criminal'){
- if(!w.accepted&&near(PLACES.contract)){place='Mercer payphone';out.push({id:'contract',label:'Accept contract',detail:'E',run:()=>acceptContract(w)});}
- if(w.accepted&&!w.purchase){if(near(PLACES.pawn)){place='Mercer Pawn · licensed sale';out.push({id:'buy',label:'Buy pistol',detail:'Recorded purchase',run:()=>acquire(w,'legal')});}if(near(PLACES.stolen)){place='Rear stock crate';out.push({id:'steal',label:'Steal pistol',detail:'No sale record',run:()=>acquire(w,'stolen')});}}
- if(w.purchase&&!w.crimeDone&&near(PLACES.target,3.2)){place='Rowan Pike · alley';out.push({id:'act',label:'Carry out contract',detail:'Non-graphic',run:()=>{commitCrime(w);sound(100,.25);}});}
- const casing=w.items.find(i=>i.kind==='casing'&&i.incident==='01'&&!i.holder&&near(i.pos,3.8));if(casing){place='Spent casing';out.push({id:'pocket',label:'Collect casing',detail:'Or leave it behind',run:()=>collectCasing(w)});}
- if(w.crimeDone&&!w.disposed)for(const where of ['dumpster','river','burial'] as Disposal[])if(near(PLACES[where])){place=where==='dumpster'?'Alley dumpster':where==='river'?'River access':'Wooded clearing';out.push({id:'dispose-'+where,label:where==='burial'?'Bury weapon':where==='river'?'Drop into river':'Discard in dumpster',detail:where==='river'?'Prints wash away over time':'Traces remain',run:()=>timed('Disposing of weapon',where==='burial'?6:2,()=>dispose(w,where))});}
- if(w.disposed&&near(PLACES.exit)){place='Mercer departure';out.push({id:'switch',label:'Become the detective',detail:w.incidents[0]?.discovered?'Same saved world':'Waiting for civilian discovery',run:()=>{switchPhase(w);waypoint=undefined;}});}
- }else{
- for(const incident of w.incidents)if(incident.discovered&&near(incident.pos,4)&&!incident.inspected){place='Reported scene '+incident.id;out.push({id:'inspect-'+incident.id,label:'Document scene '+incident.id,detail:'Collect projectile',run:()=>timed('Documenting scene',4,()=>inspectScene(w,incident.id))});}
- for(const item of w.items)if(item.visible&&!item.holder&&!item.collected&&near(item.pos,4)){place='Evidence within reach';out.push({id:'collect-'+item.id,label:'Collect '+(item.kind==='pistol'?'firearm':item.kind),detail:item.id,run:()=>collectItem(w,item.id)});}
- for(const where of ['dumpster','river','burial'] as Disposal[])if(near(PLACES[where],4)){place=where==='burial'?'Disturbed soil':where==='river'?'River access':'Alley dumpster';out.push({id:'search-'+where,label:where==='burial'?'Excavate disturbed soil':where==='river'?'Search river shallows':'Search dumpster',detail:where==='burial'?'Careful search · 12 seconds':'Search · 5 seconds',run:()=>timed('Searching '+where,where==='burial'?12:5,()=>search(w,where))});}
- if(near(PLACES.lab,4)){place='Forensics · exterior intake';out.push({id:'lab',label:'Submit lab tests',run:()=>openPanel('lab')});out.push({id:'records',label:'Look up records',run:()=>records(w)});}
- else if(near(PLACES.pawn,4)){place='Mercer Pawn';out.push({id:'ledger',label:'Ask for purchase records',run:()=>records(w)});}
- const witnesses=w.npcs.filter(n=>near(n.pos,4.5)).sort((a,b)=>dist(p,a.pos)-dist(p,b.pos));for(const n of witnesses.slice(0,2))out.push({id:'talk-'+n.id,label:'Talk to '+n.name,detail:'Record statement',run:()=>{question(w,n.id);openPanel('case');}});
- }
- return{place,actions:out.slice(0,3)};}
-function renderHUD(){const w=world;$('#phaseName').textContent=w.phase==='criminal'?'Ellis Vale · Criminal':w.phase==='detective'?'June Calder · Detective':'Case concluded';$('#phaseDot').className=w.phase;$('#clock').textContent=clock(w.time);$('#objective').textContent=objective(w);$('#objectiveTitle').textContent=w.phase==='criminal'?'The contract':w.phase==='detective'?'The investigation':'The consequences';$('#itemCount').textContent=String(w.items.filter(i=>i.holder===(w.phase==='criminal'?'ellis':'detective')).length);$('#factCount').textContent=String(w.facts.length);
- const goal=defaultGoal();$('#waypoint').textContent=goal?goal.name+' · '+Math.round(dist(w.player,goal.pos))+' m'+(waypoint?' · Map to change':''):(!w.disposed&&w.crimeDone?'Open the map to choose a disposal site.':'');
- const near=nearbyActions();actions=near.actions;$('#nearby').textContent=near.place;const html=actions.length?actions.map(a=>`<button data-action="${a.id}" ${busy?'disabled':''}><span>${a.label}</span>${a.detail?'<small>'+a.detail+'</small>':''}${icon('arrow')}</button>`).join(''):'<div class="no-action">Move closer to interact<span>Use the map to find a destination</span></div>';
- if(html!==lastActionHTML){$('#actions').innerHTML=html;lastActionHTML=html;$('#actions').querySelectorAll<HTMLButtonElement>('button').forEach(b=>b.onclick=()=>{const a=actions.find(a=>a.id===b.dataset.action);if(a&&performance.now()-lastTouchAction>500)doAction(a.run);});}
- $('#toast').textContent=w.notice;$('#toast').classList.toggle('visible',w.time<w.noticeUntil&&!!w.notice);
- $('#progress').hidden=!busy;if(busy){$('#progress span').textContent=busy.label;$('#progress i').style.width=Math.min(100,(w.playSeconds-busy.start)/busy.duration*100)+'%';}
- const label=$('#worldLabel');if(goal&&dist(w.player,goal.pos)<13&&!panel){const p=city.project(goal.pos);label.textContent=goal.name;label.style.left=p.x+'px';label.style.top=p.y+'px';label.hidden=p.x<100||p.x>innerWidth-100||p.y<170||p.y>innerHeight-140;}else label.hidden=true;
- if(w.phase==='closed'&&lastPhase!=='closed'){panel='outcome';$('#drawer').hidden=false;renderPanel();}lastPhase=w.phase;
+const $ = <T extends HTMLElement = HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
+const esc = (value: string) => value.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+const number = (value: number) => Math.round(value).toLocaleString('en');
+const capital = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
+const spotName = (id: string | null) => SPOTS.find(spot => spot.id === id)?.label ?? 'Display';
+const duration = (seconds: number) => `${Math.floor(seconds / 60)}:${Math.floor(seconds % 60).toString().padStart(2, '0')}`;
+const seed = () => {
+  try { return crypto.getRandomValues(new Uint32Array(1))[0]; }
+  catch { return (Date.now() ^ Math.floor(Math.random() * 0xffffffff)) >>> 0; }
+};
+let profile = loadProfile();
+const restored = loadRun();
+let state: CaseState = restored?.state ?? createCase(seed(), nextRelic(profile));
+let elapsedSeconds = restored?.elapsedSeconds ?? 0;
+// Repair a result/profile write interrupted by a closed tab or unavailable storage.
+if (restored?.state.result) { profile = awardResult(profile, restored.state); saveProfile(profile); }
+let intro = true, started = false, paused = false, busy = false, starting = false;
+let selectedEntry: EntryId | null = null;
+let selectedStash: StashId | null = null;
+let selectedSuspect: string | null = null;
+let lastClue: Clue | null = null;
+let notice = '';
+let noticeType: 'clue' | 'empty' | 'wrong' | '' = '';
+let timingSeconds = 0, timingCursor = 0;
+let keyboard = false, isNewBest = false, storageOK = true;
+let gallery: Gallery | null = null;
+let loading: Promise<void> | null = null;
+let loadFailed = false, contextLost = false;
+let previousFrame = performance.now(), clockSecond = -1, saveSeconds = 0, resultSubmitSecond = -1;
+const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+const audio = new AudioDirector(profile.settings.muted);
+const submitted = new Set(profile.submittedIds);
+const submitting = new Set<string>();
+
+$('#app').innerHTML = `
+<main id="game" data-screen="intro">
+  <header class="topbar">
+    <div class="wordmark" aria-label="AFTERTRACE">${icon('search')}<span>AFTERTRACE</span></div>
+    <span id="case-number" class="case-number"></span>
+    <div class="top-tools">
+      <button id="sound" class="icon-button" aria-label="Mute sound"></button>
+      <button id="pause" class="icon-button" aria-label="Pause case" hidden>${icon('pause')}</button>
+    </div>
+  </header>
+  <section class="case-head" aria-labelledby="objective">
+    <h1 id="objective">Make a little mischief.</h1>
+    <p id="help">Steal a treasure. Then solve your own mystery.</p>
+  </section>
+  <div class="play-layout">
+    <section id="stage" class="stage" aria-label="The little gallery">
+      <canvas id="world" role="img" aria-label="A miniature gallery with a treasure display, three entrances, and three hiding places."></canvas>
+      <div id="hotspots" aria-label="Gallery places"></div>
+      <div id="scene-loading" class="scene-loading" aria-hidden="true"><span class="loading-orbit"></span></div>
+      <div id="scene-error" class="scene-error" hidden><h2>The gallery could not open.</h2><p>Your case is safe. Try loading it again.</p><button id="reload" class="primary">Try again ${icon('arrow')}</button></div>
+      <div id="burst-label" class="burst-label" aria-hidden="true"></div>
+      <div id="stage-caption" class="stage-caption">${icon('jewel')}<span>The Little Gallery</span></div>
+    </section>
+    <aside class="case-console" aria-label="Case controls">
+      <ol id="phase-track" class="phase-track" aria-label="Case progress" hidden>
+        <li id="heist-phase"><span>1</span>Leave a trail</li><li id="detective-phase"><span>2</span>Solve the mystery</li>
+      </ol>
+      <div id="console-content"></div>
+      <div id="status-message" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+    </aside>
+  </div>
+  <footer class="game-footer"><span id="save-status"></span><span id="run-time"></span></footer>
+</main>
+<dialog id="pause-dialog" aria-labelledby="pause-title"><div class="pause-sheet">
+  <div class="sheet-heading"><h2 id="pause-title">Take your time.</h2><button id="close-pause" class="icon-button" aria-label="Resume case">${icon('close')}</button></div>
+  <p>The clock is paused. Your clues are safe.</p>
+  <button id="relaxed" class="setting" role="switch" aria-checked="false"><span>Relaxed timing<small>A slower needle, the same points.</small></span><i class="toggle" aria-hidden="true"></i></button>
+  <button id="dialog-sound" class="setting" role="switch" aria-checked="true"><span>Sound effects<small>Little notes for little victories.</small></span><i class="toggle" aria-hidden="true"></i></button>
+  <button id="resume" class="primary">Back to the mystery ${icon('play')}</button>
+  <button id="restart" class="text-button">Restart this case</button>
+</div></dialog>`;
+
+function announce(message: string) { $('#status-message').textContent = message; }
+function persist() {
+  const runOK = saveRun(state, elapsedSeconds), profileOK = saveProfile(profile);
+  storageOK = runOK && profileOK;
+  $('#save-status').textContent = storageOK ? (started ? 'Case saved' : 'Made for a little spare time') : 'Playing without saves';
 }
-const escape=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
-function itemRows(lab=false){const items=world.items.filter(i=>i.holder===(world.phase==='criminal'?'ellis':'detective'));return items.length?items.map(i=>`<article class="evidence-row"><div class="item-icon">${icon(i.kind==='pistol'?'bag':'finger')}</div><div><h3>${escape(i.label)}</h3><p>${world.phase==='criminal'?'Carried · details unknown without examination':'Sealed evidence · '+(i.incident?'scene '+i.incident:'recovered in district')}</p>${lab?(['prints','ballistics'] as const).map(kind=>{const t=world.tests.find(t=>t.item===i.id&&t.kind===kind);return `<button class="test-button" data-test="${i.id}:${kind}" ${t?'disabled':''}>${kind==='prints'?'Fingerprint comparison':'Ballistic analysis'} <span>${t?t.done?'Returned':Math.max(0,Math.ceil((t.due-world.time)/world.settings.timeScale))+'s remaining':'Submit · 30s'}</span></button>`;}).join(''):''}</div></article>`).join(''):'<p class="empty">'+(world.phase==='criminal'?'Nothing carried. Accept the contract, then obtain the pistol.':'No evidence collected yet. Document a scene or collect a marked object in the district.')+'</p>';}
-function renderPanel(){if(!panel)return;let title='',html='';const w=world;
- if(panel==='inventory'){title='Inventory';html='<p class="intro">'+(w.phase==='criminal'?'Objects keep their identity when they change hands.':'Sealed items preserve earlier traces. Lab tests reveal what can be established.')+'</p>'+itemRows()+(w.phase==='detective'?'<button data-go="lab" class="primary">Find Forensics on the map</button>':'');}
- if(panel==='lab'){title='Forensics intake';html='<p class="intro">Submit at the lab entrance. Tests take 30 seconds of active play; you can leave while they run. Fingerprints require reference records.</p><button id="labRecords">Retrieve reference records</button>'+itemRows(true);}
- if(panel==='case'){
- title='Case 01 · Rowan Pike';if(w.phase==='criminal')html='<p class="intro">The detective’s case opens after the criminal phase. Your hidden actions will not appear here.</p>';else{
- const ballistic=w.facts.filter(f=>f.type==='ballistic'&&f.incident);const linked=ballistic.some(f=>ballistic.some(g=>g.incident!==f.incident&&g.signature===f.signature));
- html='<p class="intro">Collected facts only. Handling, ownership and incident identity are different questions.</p>'+(linked?'<p class="linked">The tested ammunition links scenes 01 and 02 to the same firearm signature. It does not establish the same shooter.</p>':'')+'<div class="case-tabs"><button data-case="facts" class="active">Facts · '+w.facts.length+'</button><button data-case="suspects">Compare suspects</button></div><div id="factsList">'+(w.facts.length?w.facts.map(f=>'<article class="fact"><span>'+f.type+(f.incident?' · SCENE '+f.incident:'')+'</span><p>'+escape(f.text)+'</p></article>').join(''):'<p class="empty">No facts recorded. Walk to the alley and document the scene.</p>')+'</div><button id="compare" class="primary">Compare suspects & assess arrest</button>';
- }}
- if(panel==='suspects'){
- title='Does the evidence support it?';const a=arrestAssessment(w,selected);
- html='<p class="intro">Fictional case rule: all four requirements must be met for incident 01. Purchase or possession alone is insufficient. Duplicate facts count once.</p><label class="select-label" for="suspect">Compare suspect</label><select id="suspect">'+PEOPLE.map(p=>'<option value="'+p.id+'" '+(selected===p.id?'selected':'')+'>'+p.name+' · '+p.role+'</option>').join('')+'</select><div class="requirements">'+a.checks.map(c=>'<p class="'+(c.ok?'met':'missing')+'"><span>'+(c.ok?'Met':'Missing')+'</span>'+c.text+'</p>').join('')+'</div><button id="arrest" class="primary" '+(w.phase==='closed'?'disabled':'')+'>Attempt arrest of '+PEOPLE.find(p=>p.id===selected)!.name+'</button><p class="fine">'+(a.supported?'The collected evidence meets the game’s arrest requirements.':'An unsupported attempt is declined. You can continue investigating.')+'</p><button id="continueCase">'+(w.phase==='closed'?'Return to district':'Continue investigation')+'</button><details class="close-case" '+(w.phase==='closed'?'hidden':'')+'><summary>Close as unsolved</summary><p>This ends the current case without an arrest. The outcome will explain the missing evidence.</p><button id="unsolved">Confirm unsolved outcome</button></details>';
- }
- if(panel==='map'){
- title='Mercer District';html='<p class="intro">Choose a destination. A yellow ring and distance will guide you through the streets.</p><div class="map-legend"><span><i></i> You / destination</span><span>Rose dots · reported scenes</span></div><div class="destinations">';
- const destinations:[string,string,string][]=[['contract','Mercer payphone','Contract'],['pawn','Mercer Pawn','Purchase / records'],['stolen','Rear stock crate','Behind the pawnshop'],['target','Mercer alley','Rowan Pike / scene 01'],['dumpster','Alley dumpster','Traces preserved · possible retrieval'],['river','River access','Water degrades prints over time'],['burial','Wooded clearing','Traces preserved · careful search'],['lab','Forensics','Tests / reference records'],['exit','Mercer departure','Switch perspectives']];if(w.incidents.some(i=>i.id==='02'&&i.discovered))destinations.push(['second','Harbor Walk · scene 02','New civilian report']);
- html+=destinations.map(([key,name,note])=>'<button data-go="'+key+'"><span>'+name+'<small>'+note+'</small></span><b>'+Math.round(dist(w.player,PLACES[key as keyof typeof PLACES]))+' m</b></button>').join('')+'</div><button id="clearWaypoint">Clear destination</button>';
- }
- if(panel==='help'){
- title='How to play';html='<p class="intro">Nothing you do disappears. It waits to be found.</p><h2>Move through the district</h2><p>Left thumb: joystick. Right thumb: contextual actions. Keyboard: WASD or arrows, E to interact. I opens inventory, F case notes, M map. Escape closes a panel.</p><h2>Criminal → Detective</h2><p>Accept the payphone contract. Buy or steal the pistol. Find Rowan in the alley. After the non-graphic act, take or leave the casing and choose a disposal site. Return to departure after a civilian reports the scene.</p><h2>Build a case</h2><p>Document the scene, collect marked evidence, talk to pedestrians, and look up records at the shop or lab. Submit fingerprint and ballistic tests at Forensics. Compare suspects in case notes.</p><h2>The district remembers</h2><p>Dumpsters preserve traces, but a civilian can retrieve and reuse an object. Water removes prints after '+Math.round(w.settings.waterWashSeconds/w.settings.timeScale)+' seconds submerged; ballistics remain. Burial preserves traces but requires a 12-second excavation.</p><p>These are fictional gameplay rules. Prints establish handling without a timestamp. Ballistics link a weapon, not a person. The detective sees only collected observations and test results.</p><h2>Save & timing</h2><p>Auto-saved locally. Reload restores the same world and pending tests. Simulation pauses when the tab is hidden. This first case is designed for an unhurried 10–15 minute exploration; familiar routes can be completed faster.</p><button id="audio">'+icon('sound')+(audioEnabled?'Sound on · mute':'Sound off · enable')+'</button><button id="reset" class="danger">'+icon('reset')+'New game</button>';
- }
- if(panel==='outcome'){
- title=w.outcome?.solved?'An arrest. A supported case.':'The case remains unsolved.';
- html='<p class="intro">'+(w.outcome?.solved?PEOPLE.find(p=>p.id===w.outcome?.suspect)?.name+' was arrested for the alley incident. The case rests on these collected facts:':'The available evidence did not lead to an arrest. The case closed with these gaps:')+'</p><div class="outcome-reasons">'+(w.outcome?.reasons||[]).map(r=>'<p>'+escape(r)+'</p>').join('')+'</div><p class="fine">Played '+Math.floor(w.playSeconds/60)+'m '+Math.floor(w.playSeconds%60)+'s. One continuous saved world. An arrest is the end of this demonstration, not a court verdict.</p><button id="recap" class="primary">'+(showRecap?'Hide full event history':'Reveal full event history')+'</button>'+(showRecap?'<h2>What actually happened</h2><p class="fine">Post-case reveal. This hidden history was unavailable to the detective.</p><ol class="timeline">'+w.events.map(e=>'<li><time>'+clock(e.time)+'</time><div>'+escape(e.action)+'<small>'+escape(e.actor)+(e.from?' · '+escape(e.from)+' → '+escape(e.to||'world'):'')+'</small></div></li>').join('')+'</ol>':'')+'<button id="reset" class="danger">Start a different chain of events</button>';
- }
- $('#panelTitle').textContent=title;if(html===lastPanelHTML)return;const scroll=$('#panelBody').scrollTop;$('#panelBody').innerHTML=html;$('#panelBody').scrollTop=scroll;lastPanelHTML=html;
- const bind=(s:string,fn:()=>void)=>{const e=document.querySelector<HTMLButtonElement>(s);if(e)e.onclick=()=>doAction(fn);};
- bind('#labRecords',()=>records(w));bind('#compare',()=>openPanel('suspects'));bind('[data-case="suspects"]',()=>openPanel('suspects'));bind('[data-case="facts"]',()=>$('#factsList').scrollIntoView({block:'start',behavior:'smooth'}));bind('#arrest',()=>attemptArrest(w,selected));bind('#unsolved',()=>closeUnsolved(w));bind('#continueCase',closePanel);bind('#clearWaypoint',()=>{waypoint=undefined;closePanel();});bind('#reset',requestReset);bind('#audio',()=>{audioEnabled=!audioEnabled;sound();});bind('#recap',()=>{showRecap=!showRecap;lastPanelHTML='';renderPanel();});
- const sel=$<HTMLSelectElement>('#suspect');if(sel)sel.onchange=()=>{selected=sel.value;lastPanelHTML='';renderPanel();};
- document.querySelectorAll<HTMLButtonElement>('[data-go]').forEach(b=>b.onclick=()=>{const key=b.dataset.go as keyof typeof PLACES;waypoint=PLACES[key];waypointName=({contract:'Payphone',pawn:'Mercer Pawn',stolen:'Rear stock crate',target:'Mercer alley',dumpster:'Alley dumpster',river:'River access',burial:'Wooded clearing',lab:'Forensics',exit:'Departure',second:'Scene 02'} as Record<string,string>)[key];closePanel();notify(w,'Destination set: '+waypointName+'. Follow the yellow ring and distance.');});
- document.querySelectorAll<HTMLButtonElement>('[data-test]').forEach(b=>b.onclick=()=>doAction(()=>{const [id,kind]=b.dataset.test!.split(':');submitTest(w,id,kind as 'prints'|'ballistics');}));
+function renderSound() {
+  $('#sound').innerHTML = icon(profile.settings.muted ? 'muted' : 'sound');
+  $('#sound').setAttribute('aria-label', profile.settings.muted ? 'Turn sound on' : 'Mute sound');
+  $('#sound').setAttribute('aria-pressed', String(!profile.settings.muted));
+  $('#dialog-sound').setAttribute('aria-checked', String(!profile.settings.muted));
 }
-let last=performance.now(),uiElapsed=0,saveElapsed=0;function frame(now:number){const dt=Math.min(.06,(now-last)/1000);last=now;let moving=false;if(world.started&&!document.hidden&&$('#confirm').hidden){tick(world,dt);if(!panel&&world.phase!=='closed'){
- let sx=joy.x+(keys.has('d')||keys.has('arrowright')?1:0)-(keys.has('a')||keys.has('arrowleft')?1:0),sy=joy.y+(keys.has('s')||keys.has('arrowdown')?1:0)-(keys.has('w')||keys.has('arrowup')?1:0);
- const len=Math.hypot(sx,sy);if(len>.1){sx/=Math.max(1,len);sy/=Math.max(1,len);const old={...world.player};move(world,sx*.79+sy*.61,-sx*.61+sy*.79,dt);moving=dist(old,world.player)>.001;}
- }if(busy){if(dist(world.player,busy.origin)>2){busy=null;notify(world,'Action interrupted. Return to the site and try again.');}else if(world.playSeconds-busy.start>=busy.duration){const done=busy.done;busy=null;doAction(done);}}
- }
- city.update(world,dt,moving,defaultGoal()?.pos);uiElapsed+=dt;saveElapsed+=dt;if(uiElapsed>.12){renderHUD();if(panel)renderPanel();uiElapsed=0;}if(saveElapsed>2){persist();saveElapsed=0;}requestAnimationFrame(frame);}
-window.addEventListener('pagehide',persist);renderHUD();requestAnimationFrame(frame);
-// Read-only diagnostic summary, with no event history or secret traces in the UI.
-Object.defineProperty(window,'aftertraceDiagnostics',{get:()=>({phase:world.phase,position:{...world.player},fps:Math.round(city.fps),drawCalls:city.renderer.info.render.calls,triangles:city.renderer.info.render.triangles,facts:world.facts.length,tests:world.tests.map(t=>({id:t.id,done:t.done})),saveOK:storageOK})});
+function setMute() {
+  profile.settings.muted = !profile.settings.muted;
+  audio.setMuted(profile.settings.muted); audio.unlock();
+  if (!profile.settings.muted) audio.play('tap');
+  saveProfile(profile); renderSound();
+}
+function primary() { return document.querySelector<HTMLButtonElement>('#primary-action'); }
+function setPaused(value: boolean) {
+  if (intro || state.phase === 'result' || paused === value) return;
+  paused = value; previousFrame = performance.now();
+  const dialog = $<HTMLDialogElement>('#pause-dialog');
+  if (value) {
+    audio.suspend(); persist();
+    $('#relaxed').setAttribute('aria-checked', String(profile.settings.relaxed));
+    dialog.showModal(); $('#resume').focus();
+  } else {
+    dialog.close(); audio.resume();
+    if (keyboard) primary()?.focus({ preventScroll: true });
+  }
+}
+$('#sound').onclick = setMute;
+$('#dialog-sound').onclick = setMute;
+$('#pause').onclick = () => setPaused(true);
+$('#resume').onclick = $('#close-pause').onclick = () => setPaused(false);
+$('#pause-dialog').addEventListener('cancel', event => { event.preventDefault(); setPaused(false); });
+$('#relaxed').onclick = () => {
+  profile.settings.relaxed = !profile.settings.relaxed;
+  $('#relaxed').setAttribute('aria-checked', String(profile.settings.relaxed)); saveProfile(profile);
+};
+$('#restart').onclick = () => {
+  const oldSeed = state.seed, relic = RELICS.findIndex(item => item.id === state.relic.id);
+  setPaused(false); state = createCase(oldSeed, relic); elapsedSeconds = 0;
+  resetPresentation(); persist(); render();
+};
+$('#reload').onclick = () => {
+  if (contextLost) { persist(); location.reload(); return; }
+  loading = null; loadFailed = false; $('#scene-error').hidden = true; $('#scene-loading').hidden = false;
+  void ensureGallery();
+};
+function resetPresentation() {
+  selectedEntry = selectedStash = selectedSuspect = null;
+  lastClue = null; notice = ''; noticeType = ''; timingSeconds = 0; timingCursor = 0; busy = false; isNewBest = false;
+}
+async function ensureGallery() {
+  if (gallery || loading) return loading;
+  loading = (async () => {
+    try {
+      const { Gallery } = await import('./scene');
+      gallery = new Gallery($<HTMLCanvasElement>('#world'), {
+        onContextLost: () => {
+          contextLost = true;
+          paused = true;
+          $<HTMLDialogElement>('#pause-dialog').close();
+          audio.suspend();
+          if (started) persist();
+          $('#scene-error').hidden = false;
+          $('#scene-error h2').textContent = 'The gallery needs a moment.';
+          $('#scene-error p').textContent = 'Reload to pick up where you left off.';
+        },
+      });
+      gallery.setReducedMotion(reduced.matches); syncScene(); gallery.resize();
+      $('#scene-loading').hidden = true; positionHotspots();
+    } catch {
+      loadFailed = true; $('#scene-loading').hidden = true; $('#scene-error').hidden = false;
+      announce('The gallery could not load. Try again.');
+    } finally { loading = null; render(); }
+  })();
+  return loading;
+}
+function syncScene() {
+  gallery?.setState({
+    phase: intro ? 'intro' : state.phase, entry: state.entry, stash: state.stash,
+    profile: state.profile,
+    found: state.found.map(clue => clue.id),
+    relic: Math.max(0, RELICS.findIndex(relic => relic.id === state.relic.id)),
+    activeSpot: selectedEntry ?? selectedStash ?? (state.phase === 'take' ? 'pedestal' : state.hintSpot),
+  });
+}
+function flash(message: string, at: SpotId, kind: 'gold' | 'clue' = 'gold') {
+  gallery?.burst(at, kind);
+  const label = $('#burst-label'); label.textContent = message;
+  label.classList.remove('show'); void label.offsetWidth; label.classList.add('show');
+  window.setTimeout(() => label.classList.remove('show'), 1600);
+}
+function focusPrimary() { if (keyboard) requestAnimationFrame(() => primary()?.focus({ preventScroll: true })); }
+function transition() {
+  busy = true;
+  const id = state.id;
+  window.setTimeout(() => { if (id === state.id) { busy = false; render(); focusPrimary(); } }, 640);
+}
+function timingActive() {
+  return !intro && !paused && !busy && (state.phase === 'take' || (state.phase === 'entry' && !!selectedEntry) || (state.phase === 'stash' && !!selectedStash));
+}
+function timingAction() {
+  if (!timingActive()) return;
+  audio.unlock();
+  // A generous gold band feels reliable under real touch latency.
+  const quality = Math.abs(timingCursor - .5) <= .12 ? 1 : gradeTiming(timingCursor) * .95;
+  const at: SpotId = state.phase === 'entry' ? selectedEntry! : state.phase === 'take' ? 'pedestal' : selectedStash!;
+  const action = state.phase === 'entry' ? enterGallery(state, selectedEntry!, quality)
+    : state.phase === 'take' ? takeRelic(state, quality) : hideRelic(state, selectedStash!, quality);
+  if (!action.ok) return;
+  state = action.state; selectedEntry = selectedStash = null; timingSeconds = timingCursor = 0;
+  const rating = quality === 1 ? 'Perfect!' : quality >= .55 ? 'Nicely done!' : 'A little noisy!';
+  audio.play(quality === 1 ? 'perfect' : quality >= .55 ? 'good' : 'miss');
+  flash(`${rating} +${Math.round(quality * 200)}`, at);
+  announce(`${rating} ${action.message}`);
+  transition(); persist(); render();
+}
+function chooseSpot(spot: SpotId) {
+  if (intro || paused || busy) return;
+  audio.unlock();
+  if (state.phase === 'entry' && ENTRIES.some(entry => entry.id === spot)) {
+    selectedEntry = spot as EntryId; timingSeconds = 0;
+    audio.play('tap'); gallery?.focus(spot); render(); focusPrimary();
+  } else if (state.phase === 'stash' && STASHES.some(stash => stash.id === spot)) {
+    selectedStash = spot as StashId; timingSeconds = 0;
+    audio.play('tap'); gallery?.focus(spot); render(); focusPrimary();
+  } else if (state.phase === 'investigate' && !canAccuse(state)) {
+    const result = inspectSpot(state, spot);
+    if (!result.ok) { announce(result.message); return; }
+    state = result.state; gallery?.focus(spot);
+    notice = result.message; lastClue = result.clue ?? null; noticeType = result.clue ? 'clue' : 'empty';
+    if (result.clue) {
+      audio.play('clue'); flash(result.clue.id === 'charm' ? 'Treasure recovered! +500' : 'Clue found! +500', spot, 'clue');
+    } else audio.play('empty');
+    announce(result.message + (canAccuse(state) ? ' All three clues found. Choose the guest who matches.' : ''));
+    persist(); render();
+    if (canAccuse(state) && keyboard) requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('[data-suspect]')?.focus({ preventScroll: true }));
+  }
+}
+async function begin() {
+  if (starting) return;
+  starting = true; audio.unlock(); render();
+  if (loadFailed) { loadFailed = false; $('#scene-error').hidden = true; }
+  await ensureGallery(); starting = false;
+  if (!gallery) { render(); return; }
+  intro = false; started = true; audio.play('tap'); previousFrame = performance.now();
+  persist(); render(); focusPrimary();
+}
+function newCase() {
+  state = createCase(seed(), nextRelic(profile)); elapsedSeconds = 0; intro = false; started = true;
+  resetPresentation(); audio.unlock(); audio.play('tap'); persist(); render(); focusPrimary();
+}
+function finishCase() {
+  if (!selectedSuspect || busy) return;
+  const result = accuse(state, selectedSuspect, elapsedSeconds);
+  if (!result.ok) { announce(result.message); return; }
+  state = result.state;
+  if (result.correct) {
+    const completed = state.result!;
+    isNewBest = !profile.best || completed.score > profile.best.score ||
+      (completed.score === profile.best.score && completed.elapsedSeconds < profile.best.elapsedSeconds);
+    // Store the result first so startup can finish awarding an interrupted save.
+    saveRun(state, elapsedSeconds);
+    profile = awardResult(profile, state);
+    saveProfile(profile);
+    audio.play('win'); flash('Case closed!', state.stash!, 'clue'); submitArcade();
+  } else { notice = result.message; noticeType = 'wrong'; selectedSuspect = null; audio.play('miss'); }
+  announce(result.message); persist(); render(); focusPrimary();
+}
+function submitArcade() {
+  if (!state.result || submitted.has(state.id) || submitting.has(state.id) || !window.arcade?.submit) return;
+  const id = state.id, result = state.result, relic = state.relic.id, streak = profile.streak;
+  submitting.add(id);
+  const accepted = () => {
+    submitting.delete(id); submitted.add(id);
+    profile.submittedIds = [...submitted].slice(-64); saveProfile(profile);
+  };
+  try {
+    const sent = window.arcade?.submit({
+      score: result.score,
+      meta: { stars: result.stars, relic, seconds: Math.round(result.elapsedSeconds), streak, case: id, version: 2 },
+    });
+    if (sent && typeof sent.then === 'function') void sent.then(accepted, () => submitting.delete(id));
+    else accepted();
+  } catch { submitting.delete(id); /* Keep the saved result available for a retry. */ }
+}
+function stars(count: number, extra = '') {
+  return `<span class="stars ${extra}" role="img" aria-label="${count} out of 3 stars">${[1, 2, 3].map(n => icon('star', n <= count ? 'earned' : '')).join('')}</span>`;
+}
+function collection() {
+  return `<div class="collection" aria-label="Your treasure collection">${RELICS.map((relic, i) => `<div class="collectible ${profile.collection[i] ? 'collected' : ''}" aria-label="${esc(relic.name)}: ${profile.collection[i] || 0} stars" title="${esc(relic.name)}">${relicIcon(relic.id)}${profile.collection[i] ? '<span class="collection-dot"></span>' : ''}</div>`).join('')}</div>`;
+}
+function heistSteps() {
+  return `<div class="heist-steps" aria-label="${state.timing.length} of 3 heist actions complete">${['Get inside', 'Take it', 'Hide it'].map((text, i) => `<span class="${i < state.timing.length ? 'done' : i === state.timing.length ? 'current' : ''}">${i < state.timing.length ? icon('check') : `<b>${i + 1}</b>`}${text}</span>`).join('')}</div>`;
+}
+function button(label: string, action: string, disabled = false, end: IconName = 'arrow') {
+  return `<button id="primary-action" class="primary" data-action="${action}" ${disabled ? 'disabled' : ''}><span>${label}</span>${icon(end)}</button>`;
+}
+function options(places: ReadonlyArray<{ id: SpotId; label: string }>) {
+  return `<div class="place-options">${places.map(place => `<button class="place-option" data-spot="${place.id}" ${busy ? 'disabled' : ''}>${icon(place.id as IconName)}<span>${place.label}</span></button>`).join('')}</div>`;
+}
+function timing(title: string, label: string, change = false) {
+  return `${heistSteps()}<h2 class="console-title">${title}</h2><div class="timing-meter" role="img" aria-label="Timing needle. Tap in the gold middle for a perfect action."><div class="timing-rail"><div class="gold-zone"></div><div id="needle" class="needle"></div></div><div class="meter-legend"><span>Easy does it</span><span class="gold-label">${icon('spark')}Aim for gold</span></div></div>${button(label, 'timing', busy, 'spark')}${change ? '<button class="text-button change-place" data-action="change">Choose a different spot</button>' : ''}`;
+}
+function traitLabel(kind: 'fabric' | 'tread' | 'charm', value: string) {
+  if (kind === 'fabric') return capital(value) + ' scarf';
+  if (kind === 'tread') return ({ dots: 'Dotted soles', zigzag: 'Zigzag soles', bars: 'Bar soles' } as Record<string, string>)[value] ?? value;
+  return capital(value) + ' charm';
+}
+function traitIcon(kind: 'fabric' | 'tread' | 'charm', value: string) { return icon(kind === 'fabric' ? 'fabric' : value as IconName); }
+function evidence() {
+  return `<div class="evidence" aria-label="Evidence found">${(['fabric', 'tread', 'charm'] as const).map(kind => {
+    const clue = state.found.find(item => item.id === kind);
+    return `<div class="clue-slot ${clue ? 'found' : ''} ${clue?.id === lastClue?.id ? 'just-found' : ''}" data-clue="${kind}"><span class="clue-symbol ${clue?.value ?? ''}">${clue ? traitIcon(kind, clue.value) : icon(kind)}</span><span>${clue ? traitLabel(kind, clue.value) : ({ fabric: 'Scarf', tread: 'Soles', charm: 'Charm' }[kind])}</span>${clue ? icon('check', 'clue-check') : '<span class="clue-unknown">?</span>'}</div>`;
+  }).join('')}</div>`;
+}
+function portrait(suspect: Suspect, index: number) {
+  const scarf = { coral: '#d86865', mint: '#407867', violet: '#7254a0' }[suspect.fabric];
+  const skin = ['#d9a275', '#f1c5a6', '#b67b55'][index % 3], hair = ['#47334c', '#6b4833', '#bf8b54'][index % 3];
+  return `<svg class="portrait" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="32" fill="#e9dff4"/><path d="M10 64v-8c0-11 9-18 22-18s22 7 22 18v8" fill="#554363"/><ellipse cx="32" cy="27" rx="13" ry="16" fill="${skin}"/><path d="M18 27V17c0-14 28-16 28 0v8c-6-1-9-7-11-12-3 7-7 9-17 10" fill="${hair}"/><path d="M20 39q12 8 24 0l-2 8-22-1zM33 46l8 1-2 14-8-3" fill="${scarf}"/><circle cx="27" cy="28" r="1.3" fill="#342743"/><circle cx="37" cy="28" r="1.3" fill="#342743"/><path d="M28 35q4 3 8 0" fill="none" stroke="#8d534d" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+}
+function suspects() {
+  return `<div class="suspects" role="group" aria-label="Compare three guests">${state.suspects.map((suspect, i) => {
+    const cleared = state.wrongAccusations.includes(suspect.id);
+    return `<button class="suspect ${selectedSuspect === suspect.id ? 'selected' : ''}" data-suspect="${suspect.id}" aria-pressed="${selectedSuspect === suspect.id}" ${cleared ? 'disabled' : ''}>${portrait(suspect, i)}<span class="suspect-details"><strong>${esc(suspect.name)}${cleared ? '<small>Cleared</small>' : ''}</strong><span class="suspect-traits">${(['fabric', 'tread', 'charm'] as const).map(kind => `<span>${traitIcon(kind, suspect[kind])}${traitLabel(kind, suspect[kind])}</span>`).join('')}</span></span><i class="radio" aria-hidden="true"></i></button>`;
+  }).join('')}</div>`;
+}
+function renderConsole() {
+  if (intro) return `<div class="intro-invitation"><div class="relic-name">${relicIcon(state.relic.id)}<span>${esc(state.relic.name)} is waiting.</span></div>${button(starting ? 'Opening the gallery…' : restored || started ? 'Continue your case' : 'Play a case', 'begin', starting)}<div class="intro-facts"><span>${icon('clock')}About 2 minutes</span><span>${icon('spark')}One player, both sides</span></div><div class="collection-heading"><span>Your little collection</span><b>${profile.collection.filter(Boolean).length} / 6</b></div>${collection()}<div class="personal-best"><span>Best <b>${profile.best ? number(profile.best.score) : '—'}</b></span><span>Streak <b>${profile.streak}</b></span></div></div>`;
+  if (state.phase === 'entry') return selectedEntry ? timing(`Through the ${spotName(selectedEntry).toLowerCase()}.`, 'Slip inside', true) : `${heistSteps()}<h2 class="console-title">Every entrance leaves a trace.</h2>${options(ENTRIES)}`;
+  if (state.phase === 'take') return timing('One very tempting treasure.', 'Lift the treasure');
+  if (state.phase === 'stash') return selectedStash ? timing(`Tuck it by the ${spotName(selectedStash).toLowerCase()}.`, 'Hide the treasure', true) : `${heistSteps()}<h2 class="console-title">Where shall we hide it?</h2>${options(STASHES)}<p class="quiet-note">You will be back to find it.</p>`;
+  if (state.phase === 'handoff') {
+    const heistPoints = Math.round(state.timing.reduce((a, b) => a + b, 0) * 200);
+    return `<div class="handoff-seal">${icon('mask')}<span>You got away with it.</span></div><div class="heist-total"><span>Heist bonus</span><b>+${heistPoints}</b></div><div class="trace-strip">${icon('tread')}${icon('fabric')}${icon('charm')}<span>But you left three clues.</span></div>${button('Become the detective', 'investigate', busy, 'search')}`;
+  }
+  if (state.phase === 'investigate') {
+    if (canAccuse(state)) {
+      const selected = state.suspects.find(suspect => suspect.id === selectedSuspect);
+      return `<div class="evidence-heading"><span>${icon('check')}All three clues</span><b>Treasure recovered</b></div>${evidence()}${noticeType === 'wrong' ? `<p class="wrong-notice" role="status">${notice}</p>` : ''}${suspects()}${button(selected ? `Name ${esc(selected.name.split(' ')[0])}` : 'Choose the guest who matches', 'accuse', !selected, 'search')}`;
+    }
+    return `<div class="evidence-heading"><span>${icon('search')}Follow your trail</span><b>${state.found.length} / 3 clues</b></div>${evidence()}<div class="discovery ${noticeType}">${lastClue ? `<span class="discovery-icon ${lastClue.value}">${traitIcon(lastClue.id, lastClue.value)}</span><div><strong>${lastClue.id === 'charm' ? 'Treasure recovered!' : esc(lastClue.label)}</strong><p>${esc(lastClue.detail)}</p></div>` : `${icon(noticeType === 'empty' ? 'search' : 'hint')}<p>${notice || 'Three clues waiting to be found.'}</p>`}</div><button class="hint-button" data-action="hint">${icon('hint')}<span>${state.hintSpot ? 'Show my marked clue' : 'Give me a nudge'}</span><small>${state.hintSpot ? 'Already counted' : '−' + HINT_COST + ' points'}</small></button>`;
+  }
+  const result = state.result!, culprit = state.suspects.find(suspect => suspect.id === result.culpritId)!;
+  return `<div class="result-sheet">${stars(result.stars, 'result-stars')}<h2 class="result-title">${result.title}.</h2><div class="result-score"><strong>${number(result.score)}</strong><span>${isNewBest ? 'A new personal best' : 'points, beautifully earned'}</span></div><p class="culprit-reveal">It was <b>${esc(culprit.name)}</b>.</p><div class="solved-trail" aria-label="The trail you made and solved"><span>${icon(state.entry as IconName)}${spotName(state.entry)}</span>${icon('arrow')}<span>${icon('pedestal')}Display</span>${icon('arrow')}<span>${icon(state.stash as IconName)}${spotName(state.stash)}</span></div><dl class="score-breakdown"><div><dt>Three clues</dt><dd>+${result.evidence}</dd></div><div><dt>Heist timing</dt><dd>+${result.timing}</dd></div><div><dt>Case pace</dt><dd>+${result.speed}</dd></div><div><dt>First guess</dt><dd>+${result.firstTry}</dd></div>${result.penalties ? `<div><dt>Hints &amp; guesses</dt><dd>−${result.penalties}</dd></div>` : ''}</dl><div class="result-reward">${relicIcon(state.relic.id)}<span>${esc(state.relic.name)}<small>Added to your collection</small></span>${stars(profile.collection[RELICS.findIndex(relic => relic.id === state.relic.id)] || 0)}</div>${button('One more mystery', 'next')}<p class="replay-note">${result.stars < 3 ? `${number(STAR_THRESHOLDS.three)} points earns three stars. ` : ''}${profile.streak ? `${profile.streak} first-guess ${profile.streak === 1 ? 'solve' : 'solves'} in a row.` : 'A fresh trail. A new little mystery.'}</p></div>`;
+}
+function updateHeading() {
+  let title = '', help = '';
+  if (intro) { title = 'Make a little mischief.'; help = 'Steal a treasure. Then solve your own mystery.'; }
+  else if (state.phase === 'entry') { title = selectedEntry ? 'A little timing. A little luck.' : 'First, sneak into the gallery.'; help = selectedEntry ? 'Tap when the needle reaches gold.' : 'Tap an entrance to choose your trail.'; }
+  else if (state.phase === 'take') { title = `Take the ${state.relic.name}.`; help = 'Tap when the needle reaches gold.'; }
+  else if (state.phase === 'stash') { title = selectedStash ? 'The perfect hiding spot.' : 'Make the treasure disappear.'; help = selectedStash ? 'Tap when the needle reaches gold.' : 'Tap a hiding place. Remember your little trail.'; }
+  else if (state.phase === 'handoff') { title = 'Nice heist. Now, catch yourself.'; help = 'The same room. Your clues. A different pair of shoes.'; }
+  else if (state.phase === 'investigate') {
+    title = canAccuse(state) ? 'Who left all three clues?' : 'Now follow the trail you left.';
+    help = canAccuse(state) ? 'Match the scarf, the soles, and the charm.' : state.found.length === 0 ? 'Inspect the empty display to start your case.' : state.hintSpot ? `Your next clue is marked at the ${spotName(state.hintSpot).toLowerCase()}.` : 'Search the places you touched as the thief.';
+  } else { title = 'You made it. You solved it.'; help = `${state.relic.name} is back where it belongs.`; }
+  $('#objective').textContent = title; $('#help').textContent = help;
+}
+function renderHotspots() {
+  let spots: typeof SPOTS = [];
+  if (!intro && !busy) {
+    if (state.phase === 'entry' && !selectedEntry) spots = ENTRIES;
+    else if (state.phase === 'stash' && !selectedStash) spots = STASHES;
+    else if (state.phase === 'investigate' && !canAccuse(state)) spots = SPOTS;
+  }
+  const leaders = `<svg id="hotspot-leaders" aria-hidden="true">${spots.map(spot => `<line data-leader="${spot.id}"/>`).join('')}</svg>`;
+  $('#hotspots').innerHTML = leaders + spots.map(spot => {
+    const searched = state.searched.includes(spot.id), found = state.found.some(clue => clue.spot === spot.id);
+    const suggested = spot.id === state.hintSpot || (state.phase === 'investigate' && state.found.length === 0 && spot.id === 'pedestal');
+    return `<button class="hotspot ${suggested ? 'suggested' : ''} ${found ? 'found' : ''} ${searched && !found ? 'searched' : ''}" data-spot="${spot.id}" aria-label="${state.phase === 'investigate' ? 'Inspect' : 'Choose'} ${spot.label}${searched ? ' — searched' : ''}" ${searched ? 'disabled' : ''}><span class="hotspot-dot">${icon(found ? 'check' : searched ? 'close' : state.phase === 'investigate' ? 'search' : 'arrow')}</span><span class="hotspot-name">${spot.label}</span></button>`;
+  }).join('');
+  positionHotspots();
+}
+function positionHotspots() {
+  if (!gallery) return;
+  const stage = $('#stage'), width = stage.clientWidth, height = stage.clientHeight;
+  const targets = Array.from(document.querySelectorAll<HTMLElement>('#hotspots [data-spot]'));
+  const projected = targets.map(el => {
+    const point = gallery!.project(el.dataset.spot!);
+    return { el, point, x: Math.max(38, Math.min(width - 38, point.x * width)), y: Math.max(38, Math.min(height - 40, point.y * height)) };
+  });
+  const crowded = projected.some((a, index) => projected.slice(index + 1).some(b =>
+    Math.abs(a.x - b.x) < (a.el.offsetWidth + b.el.offsetWidth) / 2 + 8 &&
+    Math.abs(a.y - b.y) < (a.el.offsetHeight + b.el.offsetHeight) / 2 + 8));
+  // Keep every label readable in both short rooms and narrow desktop columns.
+  // Keep them in stable rows and connect each label to its exact scene anchor.
+  const compact = targets.length === 7 && (height < 360 || crowded);
+  const rows: Record<string, [number, number]> = {
+    window: [.35, 0], door: [.66, 0], pedestal: [.40, 1], clock: [.83, 1],
+    planter: [.16, 2], bench: [.48, 2], terrace: [.82, 2],
+  };
+  const leaders = document.querySelector<SVGSVGElement>('#hotspot-leaders');
+  leaders?.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  if (leaders) leaders.style.display = compact ? '' : 'none';
+  projected.forEach(({ el, point, x: anchorX, y: anchorY }) => {
+    const row = rows[el.dataset.spot!], spread = Math.min(width, 360), rise = Math.min(height, 360);
+    const x = compact ? (width - spread) / 2 + row[0] * spread : anchorX;
+    const y = compact ? (height - rise) / 2 + 38 + row[1] * (rise - 76) / 2 : anchorY;
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    el.style.visibility = point.visible ? 'visible' : 'hidden';
+    const line = leaders?.querySelector(`[data-leader="${el.dataset.spot}"]`);
+    if (line && compact) {
+      line.setAttribute('x1', String(x)); line.setAttribute('y1', String(y - 10));
+      line.setAttribute('x2', String(point.x * width)); line.setAttribute('y2', String(point.y * height));
+    }
+  });
+}
+function render() {
+  $('#game').dataset.screen = intro ? 'intro' : state.phase === 'investigate' && canAccuse(state) ? 'compare' : state.phase;
+  $('#case-number').textContent = intro ? 'A little mystery for everyone' : `Case ${(profile.cases + (state.phase === 'result' ? 0 : 1)).toString().padStart(2, '0')}`;
+  $('#pause').hidden = intro || state.phase === 'result'; $('#phase-track').hidden = intro || state.phase === 'result';
+  const detective = state.phase === 'investigate' || state.phase === 'result';
+  $('#heist-phase').className = detective || state.phase === 'handoff' ? 'complete' : 'active';
+  $('#detective-phase').className = detective ? 'active' : '';
+  $('#console-content').innerHTML = renderConsole(); $('#stage-caption').hidden = !intro;
+  updateHeading(); renderSound(); syncScene(); renderHotspots();
+  $('#save-status').textContent = storageOK ? (started ? 'Case saved' : 'Made for a little spare time') : 'Playing without saves';
+  $('#run-time').textContent = intro ? '' : state.phase === 'handoff' ? 'Clock paused' :
+    state.phase === 'result' ? `Solved in ${duration(state.result!.elapsedSeconds)}` : duration(elapsedSeconds);
+  requestAnimationFrame(() => { gallery?.resize(); positionHotspots(); });
+}
+$('#app').addEventListener('click', event => {
+  const target = (event.target as HTMLElement).closest<HTMLButtonElement>('button');
+  if (!target || target.disabled || paused || busy) return;
+  if (target.dataset.spot) { chooseSpot(target.dataset.spot as SpotId); return; }
+  if (target.dataset.suspect) { selectedSuspect = target.dataset.suspect; audio.play('tap'); render(); focusPrimary(); return; }
+  switch (target.dataset.action) {
+    case 'begin': void begin(); break;
+    case 'timing': timingAction(); break;
+    case 'change': selectedEntry = selectedStash = null; timingSeconds = 0; gallery?.focus(null); render(); break;
+    case 'investigate': {
+      const result = beginInvestigation(state);
+      if (!result.ok) return;
+      state = result.state; notice = ''; lastClue = null;
+      audio.play('switch'); transition(); persist(); render(); announce('Now you are the detective. Inspect the empty display.'); break;
+    }
+    case 'hint': {
+      const result = requestHint(state); state = result.state;
+      if (result.hint) { gallery?.focus(result.hint); notice = result.message; noticeType = ''; lastClue = null; audio.play('tap'); announce(result.message); persist(); render(); }
+      break;
+    }
+    case 'accuse': finishCase(); break;
+    case 'next': newCase(); break;
+  }
+});
+document.addEventListener('pointerdown', () => { keyboard = false; }, { passive: true });
+document.addEventListener('keydown', event => {
+  keyboard = true;
+  if (event.repeat) { if (event.key === 'Enter' || event.key === ' ') event.preventDefault(); return; }
+  if (event.key === 'Escape' && !$<HTMLDialogElement>('#pause-dialog').open) { event.preventDefault(); setPaused(true); return; }
+  if (busy && (event.key === 'Enter' || event.key === ' ')) event.preventDefault();
+  if (paused || busy || event.altKey || event.ctrlKey || event.metaKey) return;
+  if (event.key >= '1' && event.key <= '3') {
+    const index = Number(event.key) - 1;
+    if (!intro && state.phase === 'entry' && !selectedEntry) chooseSpot(ENTRIES[index].id);
+    else if (!intro && state.phase === 'stash' && !selectedStash) chooseSpot(STASHES[index].id);
+    else if (!intro && canAccuse(state)) document.querySelectorAll<HTMLButtonElement>('[data-suspect]')[index]?.click();
+  }
+  if ((event.key === ' ' || event.key === 'Enter') && !(event.target instanceof HTMLButtonElement)) {
+    const action = primary(); if (action && !action.disabled) { event.preventDefault(); action.click(); }
+  }
+});
+document.addEventListener('visibilitychange', () => {
+  previousFrame = performance.now();
+  if (document.hidden) { audio.suspend(); if (started) persist(); }
+  else if (!paused) audio.resume();
+});
+window.addEventListener('pagehide', () => { if (started) persist(); audio.suspend(); });
+window.addEventListener('pageshow', () => { previousFrame = performance.now(); if (!document.hidden && !paused) audio.resume(); });
+reduced.addEventListener('change', () => gallery?.setReducedMotion(reduced.matches));
+new ResizeObserver(() => { gallery?.resize(); positionHotspots(); }).observe($('#stage'));
+function frame(now: number) {
+  const raw = Math.max(0, (now - previousFrame) / 1000); previousFrame = now;
+  if (!document.hidden && !paused && !contextLost) {
+    // The role-switch reveal is reading time; the case clock resumes with investigation.
+    if (!intro && ['entry', 'take', 'stash', 'investigate'].includes(state.phase)) {
+      elapsedSeconds += raw; saveSeconds += raw;
+      if (saveSeconds >= 3) { saveSeconds = 0; persist(); }
+    }
+    if (timingActive()) {
+      timingSeconds += raw;
+      const pace = profile.settings.relaxed ? 2.6 : profile.cases === 0 ? 1.5 : 1.15;
+      const progress = (timingSeconds / pace) % 2; timingCursor = progress <= 1 ? progress : 2 - progress;
+      const needle = document.querySelector<HTMLElement>('#needle');
+      if (needle) { needle.style.left = (timingCursor * 100) + '%'; needle.classList.toggle('in-gold', Math.abs(timingCursor - .5) <= .12); }
+    }
+    gallery?.render(Math.min(raw, .05));
+  }
+  if (clockSecond !== Math.floor(elapsedSeconds)) { clockSecond = Math.floor(elapsedSeconds); if (!intro && state.phase !== 'result' && state.phase !== 'handoff') $('#run-time').textContent = duration(elapsedSeconds); }
+  if (state.phase === 'result' && resultSubmitSecond !== Math.floor(now / 1000)) { resultSubmitSecond = Math.floor(now / 1000); submitArcade(); }
+  requestAnimationFrame(frame);
+}
+render(); requestAnimationFrame(frame);
+// Paint the tiny, usable shell first; geometry and Three.js form a lazy chunk.
+requestAnimationFrame(() => { void ensureGallery(); });

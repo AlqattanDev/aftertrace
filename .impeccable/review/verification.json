@@ -1,0 +1,168 @@
+{
+  "date": "2026-10-11",
+  "base": "3133ff76dfed1001bf34354d0a0fe0530fd2cbcf",
+  "branch": "cgpt/aftertrace-redo",
+  "commands": {
+    "npm test": "22 passed, 0 failed",
+    "npm run build": "passed",
+    "npm run build:showcase": "passed",
+    "QA_SHOWCASE=1 npm run test:browser": "13 scenarios passed, 0 failed"
+  },
+  "browser": "153.0.8010.0",
+  "browserScenarios": [
+    {
+      "name": "desktop mouse: full loop, pause, mute and three reload points",
+      "status": "PASS"
+    },
+    {
+      "name": "portrait touch: empty search, hint, wrong guess, retry and next case",
+      "status": "PASS"
+    },
+    {
+      "name": "desktop keyboard: Tab, Enter, number shortcuts and held-key protection",
+      "status": "PASS"
+    },
+    {
+      "name": "equal-score best: a faster 3000-point solve earns the personal-best label",
+      "status": "PASS"
+    },
+    {
+      "name": "restored touch layout 320x568: all seven targets",
+      "status": "PASS"
+    },
+    {
+      "name": "restored touch layout 360x740: all seven targets",
+      "status": "PASS"
+    },
+    {
+      "name": "restored touch layout 844x390: all seven targets",
+      "status": "PASS"
+    },
+    {
+      "name": "narrow desktop/tablet geometry: 721, 768, 820 and 1024 pixels",
+      "status": "PASS"
+    },
+    {
+      "name": "interrupted-save fixture: a result rebuilds a missing profile once",
+      "status": "PASS"
+    },
+    {
+      "name": "arcade missing: saved result and next case remain usable",
+      "status": "PASS"
+    },
+    {
+      "name": "arcade throw: saved result and next case remain usable",
+      "status": "PASS"
+    },
+    {
+      "name": "arcade reject: saved result and next case remain usable",
+      "status": "PASS"
+    },
+    {
+      "name": "simulated WebGL loss: visible reload action restores the case",
+      "status": "PASS"
+    }
+  ],
+  "layouts": [
+    {
+      "viewport": "390x844",
+      "targets": 7,
+      "overlaps": 0,
+      "allCentersReachable": true,
+      "minimumTargetWidth": 60,
+      "minimumTargetHeight": 71.09375
+    },
+    {
+      "viewport": "320x568",
+      "targets": 7,
+      "overlaps": 0,
+      "allCentersReachable": true,
+      "minimumTargetWidth": 60,
+      "minimumTargetHeight": 71.09375
+    },
+    {
+      "viewport": "360x740",
+      "targets": 7,
+      "overlaps": 0,
+      "allCentersReachable": true,
+      "minimumTargetWidth": 60,
+      "minimumTargetHeight": 71.09375
+    },
+    {
+      "viewport": "844x390",
+      "targets": 7,
+      "overlaps": 0,
+      "allCentersReachable": true,
+      "minimumTargetWidth": 60,
+      "minimumTargetHeight": 73.09375
+    },
+    {
+      "viewport": "721x900",
+      "targets": 7,
+      "overlaps": 0,
+      "allCentersReachable": true,
+      "minimumTargetWidth": 60,
+      "minimumTargetHeight": 73.09375
+    },
+    {
+      "viewport": "768x900",
+      "targets": 7,
+      "overlaps": 0,
+      "allCentersReachable": true,
+      "minimumTargetWidth": 60,
+      "minimumTargetHeight": 73.09375
+    },
+    {
+      "viewport": "820x900",
+      "targets": 7,
+      "overlaps": 0,
+      "allCentersReachable": true,
+      "minimumTargetWidth": 60,
+      "minimumTargetHeight": 73.09375
+    },
+    {
+      "viewport": "1024x768",
+      "targets": 7,
+      "overlaps": 0,
+      "allCentersReachable": true,
+      "minimumTargetWidth": 60,
+      "minimumTargetHeight": 73.09375
+    }
+  ],
+  "startup": {
+    "viewport": "1440x900",
+    "bodyBytes": 508811,
+    "bytesIncludingHeaders": 511377,
+    "byType": {
+      "document": 975,
+      "stylesheet": 6098,
+      "script": 160342,
+      "font": 341396,
+      "image": 0
+    },
+    "externalRequests": [],
+    "failedRequests": []
+  },
+  "showcaseFolderBytes": 969835,
+  "sceneChecks": {
+    "profiles": 27,
+    "relics": 6,
+    "geometryReallocatedOnStateChanges": 0,
+    "introDrawCalls": 64,
+    "introTriangles": 57234,
+    "detectiveDrawCalls": [
+      72,
+      73
+    ],
+    "detectiveTriangles": [
+      58482,
+      59946
+    ]
+  },
+  "review": "Independent source and rendered-interface review accepted the compact-screen correction. Final follow-up fixed narrow desktop label collisions and faster tied personal-best feedback. The intentional handoff pause is now explicit and covered by a browser regression.",
+  "limitations": [
+    "Headless Chromium with software WebGL; physical-device 60 fps and Safari/Firefox have not been verified.",
+    "Audio initialization, lifecycle and remembered mute were checked, but sound was not auditioned through speakers.",
+    "Arcade checks use stubs; the live portfolio injection, hosted stylesheet and deployment were not exercised."
+  ]
+}
