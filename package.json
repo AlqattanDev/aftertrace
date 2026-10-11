@@ -1,14 +1,15 @@
 {
   "name": "aftertrace",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "tsc --noEmit && vite build",
-    "test": "tsx --test tests/*.test.ts",
+    "test": "node --import tsx --test tests/*.test.ts",
     "preview": "vite preview --host 0.0.0.0",
-    "build:showcase": "tsc --noEmit && vite build --mode showcase"
+    "build:showcase": "tsc --noEmit && vite build --mode showcase",
+    "test:browser": "node tests/browser.mjs"
   },
   "dependencies": {
     "three": "^0.180.0"
@@ -20,7 +21,7 @@
     "tsx": "^4.20.5",
     "@playwright/test": "^1.55.0"
   },
-  "description": "A playable crime simulation in one persistent district. Nothing disappears. It waits to be found.",
+  "description": "A playful gallery heist: leave a trail as the thief, then solve your own mystery.",
   "repository": {
     "type": "git",
     "url": "https://github.com/AlqattanDev/aftertrace.git"
